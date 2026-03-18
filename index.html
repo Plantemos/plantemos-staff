@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plantemos Staff</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --verde: #657146;
+      --verde-dark: #4a5233;
+      --verde-light: #8a9962;
+      --verde-pale: #f0f3ea;
+      --verde-muted: #e8edd9;
+      --blanco: #fafaf7;
+      --gris-texto: #2c2c28;
+      --gris-medio: #6b6b5f;
+      --gris-claro: #e4e4dc;
+      --sombra: 0 2px 16px rgba(101,113,70,0.10);
+      --sombra-hover: 0 8px 32px rgba(101,113,70,0.18);
+      --radio: 12px;
+      --radio-lg: 20px;
+    }
+
+    html, body, #root {
+      height: 100%;
+      background: var(--blanco);
+      color: var(--gris-texto);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* LAYOUT */
+    .app-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* NAVBAR */
+    .navbar {
+      background: var(--verde);
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .navbar-logo {
+      height: 36px;
+    }
+    .navbar-title {
+      font-family: 'DM Serif Display', serif;
+      color: #fff;
+      font-size: 1.15rem;
+      letter-spacing: 0.01em;
+    }
+    .navbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .navbar-user {
+      color: rgba(255,255,255,0.85);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .navbar-badge {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .navbar-badge.admin {
+      background: #fff;
+      color: var(--verde);
+    }
+    .btn-logout {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.25); }
+
+    /* MAIN */
+    .main-content {
+      flex: 1;
+      padding: 40px 32px;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* NAV TABS */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 36px;
+      background: var(--verde-muted);
+      padding: 4px;
+      border-radius: var(--radio);
+      width: fit-content;
+    }
+    .tab {
+      padding: 8px 22px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--gris-medio);
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .tab.active {
+      background: #fff;
+      color: var(--verde-dark);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    }
+    .tab:hover:not(.active) { color: var(--verde); }
+
+    /* PAGE HEADER */
+    .page-header {
+      margin-bottom: 28px;
+    }
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2rem;
+      color: var(--verde-dark);
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    .page-subtitle {
+      color: var(--gris-medio);
+      font-size: 0.92rem;
+    }
+
+    /* CARDS */
+    .card {
+      background: #fff;
+      border-radius: var(--radio-lg);
+      box-shadow: var(--sombra);
+      padding: 28px;
+      transition: box-shadow 0.25s, transform 0.25s;
+      border: 1px solid var(--gris-claro);
+    }
+    .card:hover { box-shadow: var(--sombra-hover); }
+    .card-clickable { cursor: pointer; }
+    .card-clickable:hover { transform: translateY(-2px); }
+
+    /* EVENTO CARD */
+    .eventos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .evento-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .evento-empresa {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.25rem;
+      color: var(--verde-dark);
+      line-height: 1.3;
+    }
+    .evento-badge {
+      background: var(--verde-pale);
+      color: var(--verde);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      margin-left: 12px;
+    }
+    .evento-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+    .evento-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--gris-medio);
+    }
+    .evento-meta-icon {
+      width: 16px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .evento-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 16px;
+      border-top: 1px solid var(--gris-claro);
+    }
+    .evento-tareas-count {
+      font-size: 0.82rem;
+      color: var(--gris-medio);
+    }
+    .btn-primary {
+      background: var(--verde);
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary:hover { background: var(--verde-dark); transform: translateY(-1px); }
+    .btn-primary:disabled { background: var(--gris-claro); color: var(--gris-medio); cursor: not-allowed; transform: none; }
+    .btn-secondary {
+      background: transparent;
+      color: var(--verde);
+      border: 1.5px solid var(--verde);
+      padding: 9px 20px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-secondary:hover { background: var(--verde-pale); }
+    .btn-back {
+      background: none;
+      border: none;
+      color: var(--verde);
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0;
+      margin-bottom: 24px;
+      font-family: 'DM Sans', sans-serif;
+      transition: color 0.2s;
+    }
+    .btn-back:hover { color: var(--verde-dark); }
+
+    /* DETALLE EVENTO */
+    .detalle-header {
+      background: var(--verde);
+      border-radius: var(--radio-lg);
+      padding: 28px 32px;
+      margin-bottom: 28px;
+      color: #fff;
+    }
+    .detalle-empresa {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+    }
+    .detalle-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .detalle-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.88rem;
+      opacity: 0.9;
+    }
+
+    /* TAREAS */
+    .tareas-section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.2rem;
+      color: var(--verde-dark);
+      margin-bottom: 16px;
+    }
+    .tareas-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .tarea-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      background: #fff;
+      border: 1.5px solid var(--gris-claro);
+      border-radius: var(--radio);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .tarea-item:hover { border-color: var(--verde-light); background: var(--verde-pale); }
+    .tarea-item.selected {
+      border-color: var(--verde);
+      background: var(--verde-pale);
+    }
+    .tarea-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .tarea-item.disabled:hover { border-color: var(--gris-claro); background: #fff; }
+    .tarea-checkbox {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: 2px solid var(--gris-claro);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      background: #fff;
+    }
+    .tarea-item.selected .tarea-checkbox {
+      background: var(--verde);
+      border-color: var(--verde);
+    }
+    .tarea-checkbox-check {
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .tarea-info { flex: 1; }
+    .tarea-nombre {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--gris-texto);
+      margin-bottom: 3px;
+    }
+    .tarea-inscritos {
+      font-size: 0.78rem;
+      color: var(--gris-medio);
+    }
+    .tarea-vencimiento {
+      font-size: 0.78rem;
+      color: var(--gris-medio);
+      white-space: nowrap;
+    }
+
+    /* INSCRIPCION PANEL */
+    .inscripcion-panel {
+      background: var(--verde-pale);
+      border: 1.5px solid var(--verde-muted);
+      border-radius: var(--radio-lg);
+      padding: 24px;
+      margin-top: 8px;
+    }
+    .inscripcion-panel-title {
+      font-weight: 600;
+      color: var(--verde-dark);
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+    .inscripcion-counter {
+      font-size: 0.85rem;
+      color: var(--gris-medio);
+      margin-bottom: 16px;
+    }
+    .inscripcion-counter span {
+      font-weight: 700;
+      color: var(--verde);
+    }
+    .inscripcion-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* MIS INSCRIPCIONES */
+    .inscripciones-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .inscripcion-card {
+      background: #fff;
+      border: 1.5px solid var(--gris-claro);
+      border-radius: var(--radio-lg);
+      padding: 22px 24px;
+    }
+    .inscripcion-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .inscripcion-empresa {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      color: var(--verde-dark);
+    }
+    .inscripcion-fecha {
+      font-size: 0.8rem;
+      color: var(--gris-medio);
+    }
+    .inscripcion-estado {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--verde-pale);
+      color: var(--verde);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+    .inscripcion-estado-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--verde);
+    }
+
+    /* ADMIN VIEW */
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: #fff;
+      border: 1.5px solid var(--gris-claro);
+      border-radius: var(--radio-lg);
+      padding: 20px 24px;
+      text-align: center;
+    }
+    .stat-number {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.2rem;
+      color: var(--verde);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--gris-medio);
+      font-weight: 500;
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .admin-table th {
+      text-align: left;
+      padding: 12px 16px;
+      background: var(--verde-pale);
+      color: var(--verde-dark);
+      font-weight: 600;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .admin-table th:first-child { border-radius: 8px 0 0 8px; }
+    .admin-table th:last-child { border-radius: 0 8px 8px 0; }
+    .admin-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--gris-claro);
+      color: var(--gris-texto);
+    }
+    .admin-table tr:last-child td { border-bottom: none; }
+    .admin-table tr:hover td { background: var(--verde-pale); }
+
+    /* LOGIN */
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--verde-pale);
+      background-image: radial-gradient(circle at 20% 50%, rgba(101,113,70,0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(101,113,70,0.06) 0%, transparent 40%);
+      padding: 24px;
+    }
+    .login-card {
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(101,113,70,0.15);
+      padding: 52px 48px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+    }
+    .login-logo {
+      height: 52px;
+      margin-bottom: 28px;
+    }
+    .login-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.7rem;
+      color: var(--verde-dark);
+      margin-bottom: 8px;
+    }
+    .login-subtitle {
+      color: var(--gris-medio);
+      font-size: 0.9rem;
+      margin-bottom: 36px;
+      line-height: 1.5;
+    }
+    .btn-microsoft {
+      background: var(--verde);
+      color: #fff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .btn-microsoft:hover { background: var(--verde-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(101,113,70,0.25); }
+    .login-footer {
+      font-size: 0.78rem;
+      color: var(--gris-medio);
+      margin-top: 20px;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--gris-medio);
+    }
+    .empty-icon { font-size: 3rem; margin-bottom: 16px; }
+    .empty-title { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--verde-dark); margin-bottom: 8px; }
+    .empty-text { font-size: 0.9rem; }
+
+    /* LOADING */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px;
+      gap: 16px;
+      color: var(--gris-medio);
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--verde-muted);
+      border-top-color: var(--verde);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ALERT */
+    .alert {
+      padding: 14px 18px;
+      border-radius: var(--radio);
+      font-size: 0.88rem;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .alert-success { background: #eaf2e8; color: #2d6a27; border: 1px solid #c3e0bf; }
+    .alert-error { background: #fdf0ee; color: #c0392b; border: 1px solid #f5c6c0; }
+    .alert-info { background: var(--verde-pale); color: var(--verde-dark); border: 1px solid var(--verde-muted); }
+
+    /* DIVIDER */
+    .divider { height: 1px; background: var(--gris-claro); margin: 24px 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      .main-content { padding: 24px 16px; }
+      .navbar { padding: 0 16px; }
+      .navbar-title { display: none; }
+      .eventos-grid { grid-template-columns: 1fr; }
+      .admin-stats { grid-template-columns: repeat(2, 1fr); }
+      .login-card { padding: 36px 24px; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+// ─── CONFIGURACIÓN ───────────────────────────────────────────────
+const CONFIG = {
+  clientId: "456b47f6-2af2-4847-85ee-e23c8020ef5a",
+  tenantId: "882c9350-aa5d-48b1-9b49-f8d540a2cec2",
+  adminEmail: "jcm@plantemos.org",
+  flows: {
+    getEventos:        "https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/f0523be9bc374fbab8ef5d26a852546f/triggers/manual/paths/invoke?api-version=1",
+    getTareasEvento:   "https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2cbb1e46543b433ca1a6db07d37dd5a0/triggers/manual/paths/invoke?api-version=1",
+    inscribirStaff:    "https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/122f2cd8cc0841c6929168b2b89b7e33/triggers/manual/paths/invoke?api-version=1",
+    getInscripciones:  "https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/7d260ce40ac7421d97e86ad97597b28f/triggers/manual/paths/invoke?api-version=1",
+  }
+};
+
+// ─── MSAL ────────────────────────────────────────────────────────
+const msalConfig = {
+  auth: {
+    clientId: CONFIG.clientId,
+    authority: `https://login.microsoftonline.com/${CONFIG.tenantId}`,
+    redirectUri: window.location.origin + window.location.pathname,
+  },
+  cache: { cacheLocation: "sessionStorage" }
+};
+const msalInstance = new msal.PublicClientApplication(msalConfig);
+const loginRequest = { scopes: ["User.Read"] };
+const flowRequest = { scopes: ["https://service.flow.microsoft.com//.default"] };
+
+// ─── API HELPER ──────────────────────────────────────────────────
+async function callFlow(url, method = "GET", body = null, token = null) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const opts = { method, headers };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if (!res.ok) throw new Error(`Error ${res.status}`);
+  return res.json();
+}
+
+// ─── ICONS ───────────────────────────────────────────────────────
+const Icon = ({ name }) => {
+  const icons = {
+    calendar: "📅", location: "📍", users: "👥", tree: "🌳",
+    check: "✓", back: "←", logout: "↩", admin: "⚙️",
+    events: "🗓", mylist: "📋", loading: "⏳", empty: "🌿",
+    success: "✅", error: "❌", info: "ℹ️", ms: "🔷"
+  };
+  return <span>{icons[name] || "•"}</span>;
+};
+
+// ─── LOGIN SCREEN ────────────────────────────────────────────────
+function LoginScreen({ onLogin, error }) {
+  const [loading, setLoading] = useState(false);
+  const handleLogin = async () => {
+    setLoading(true);
+    try {
+      await msalInstance.handleRedirectPromise();
+      const result = await msalInstance.loginPopup(loginRequest);
+      onLogin(result.account);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <div className="login-screen">
+      <div className="login-card">
+        <img className="login-logo"
+          src="https://plantemos.org/wp-content/uploads/2023/05/cropped-plantemos_logotipo_horizontal_transparente_blanco.png"
+          alt="Plantemos"
+          onError={e => { e.target.style.display='none'; }}
+        />
+        <h1 className="login-title">Portal de Staff</h1>
+        <p className="login-subtitle">
+          Accede con tu cuenta <strong>@plantemos.org</strong> para ver los eventos disponibles y registrar tus tareas.
+        </p>
+        {error && <div className="alert alert-error"><Icon name="error" /> {error}</div>}
+        <button className="btn-microsoft" onClick={handleLogin} disabled={loading}>
+          {loading ? <><div className="spinner" style={{width:20,height:20,borderWidth:2}} /> Iniciando sesión...</> : <><Icon name="ms" /> Iniciar sesión con Microsoft</>}
+        </button>
+        <p className="login-footer">Solo cuentas @plantemos.org tienen acceso</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── NAVBAR ──────────────────────────────────────────────────────
+function Navbar({ user, isAdmin, onLogout }) {
+  return (
+    <nav className="navbar">
+      <div className="navbar-brand">
+        <img className="navbar-logo"
+          src="https://plantemos.org/wp-content/uploads/2023/05/cropped-plantemos_logotipo_horizontal_transparente_blanco.png"
+          alt="Plantemos"
+          onError={e => { e.target.style.display='none'; }}
+        />
+        <span className="navbar-title">Portal de Staff</span>
+      </div>
+      <div className="navbar-right">
+        <span className="navbar-user">{user?.username}</span>
+        {isAdmin && <span className="navbar-badge admin">Admin</span>}
+        <button className="btn-logout" onClick={onLogout}><Icon name="logout" /> Salir</button>
+      </div>
+    </nav>
+  );
+}
+
+// ─── EVENTOS SCREEN ──────────────────────────────────────────────
+function EventosScreen({ token, userEmail, onVerEvento }) {
+  const [eventos, setEventos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    callFlow(CONFIG.flows.getEventos, "GET", null, token)
+      .then(data => {
+        const items = data.value || [];
+        // Agrupar por EventoId — tomar solo un item por evento
+        const map = {};
+        items.forEach(t => {
+          if (!map[t.EventoId]) map[t.EventoId] = t;
+        });
+        setEventos(Object.values(map));
+        setLoading(false);
+      })
+      .catch(e => { setError("No se pudieron cargar los eventos."); setLoading(false); });
+  }, [token]);
+
+  if (loading) return <div className="loading"><div className="spinner"/><span>Cargando eventos...</span></div>;
+  if (error) return <div className="alert alert-error"><Icon name="error"/> {error}</div>;
+  if (eventos.length === 0) return (
+    <div className="empty-state">
+      <div className="empty-icon"><Icon name="empty"/></div>
+      <div className="empty-title">Sin eventos activos</div>
+      <div className="empty-text">No hay eventos abiertos para inscripción en este momento.</div>
+    </div>
+  );
+
+  return (
+    <>
+      <div className="page-header">
+        <h1 className="page-title">Eventos abiertos</h1>
+        <p className="page-subtitle">{eventos.length} evento{eventos.length !== 1 ? 's' : ''} disponible{eventos.length !== 1 ? 's' : ''} para inscripción</p>
+      </div>
+      <div className="eventos-grid">
+        {eventos.map(ev => (
+          <div key={ev.EventoId} className="card card-clickable" onClick={() => onVerEvento(ev)}>
+            <div className="evento-card-header">
+              <div className="evento-empresa">{ev.EmpresaCliente}</div>
+              <span className="evento-badge">Abierto</span>
+            </div>
+            <div className="evento-meta">
+              <div className="evento-meta-item">
+                <span className="evento-meta-icon"><Icon name="calendar"/></span>
+                {ev.FechaEvento || "Fecha por confirmar"}
+              </div>
+              <div className="evento-meta-item">
+                <span className="evento-meta-icon"><Icon name="location"/></span>
+                {ev.NombreEvento || ev.EventoId}
+              </div>
+            </div>
+            <div className="evento-footer">
+              <span className="evento-tareas-count"><Icon name="tree"/> 13 tareas disponibles</span>
+              <button className="btn-primary">Ver tareas →</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ─── DETALLE EVENTO SCREEN ───────────────────────────────────────
+function DetalleEventoScreen({ evento, token, userEmail, userName, onBack }) {
+  const [tareas, setTareas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [seleccionadas, setSeleccionadas] = useState([]);
+  const [enviando, setEnviando] = useState(false);
+  const [exito, setExito] = useState(false);
+  const [error, setError] = useState(null);
+  const MAX_TAREAS = 3;
+
+  useEffect(() => {
+    setLoading(true);
+    callFlow(CONFIG.flows.getTareasEvento, "POST", { eventoId: evento.EventoId }, token)
+      .then(data => { setTareas(data.value || []); setLoading(false); })
+      .catch(() => { setError("No se pudieron cargar las tareas."); setLoading(false); });
+  }, [evento.EventoId, token]);
+
+  const toggleTarea = (tarea) => {
+    if (exito) return;
+    const yaSeleccionada = seleccionadas.find(t => t.ID === tarea.ID);
+    if (yaSeleccionada) {
+      setSeleccionadas(seleccionadas.filter(t => t.ID !== tarea.ID));
+    } else {
+      if (seleccionadas.length >= MAX_TAREAS) return;
+      setSeleccionadas([...seleccionadas, tarea]);
+    }
+  };
+
+  const handleInscribir = async () => {
+    if (seleccionadas.length === 0) return;
+    setEnviando(true);
+    setError(null);
+    try {
+      await callFlow(CONFIG.flows.inscribirStaff, "POST", {
+        nombreStaff: userName,
+        emailStaff: userEmail,
+        eventoId: evento.EventoId,
+        nombreEvento: evento.NombreEvento || evento.EventoId,
+        tareasSeleccionadas: seleccionadas.map(t => ({
+          tareaId: t.ID,
+          nombreTarea: t.Title
+        }))
+      }, token);
+      setExito(true);
+      setSeleccionadas([]);
+    } catch (e) {
+      setError("Hubo un error al inscribirte. Intenta de nuevo.");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <>
+      <button className="btn-back" onClick={onBack}><Icon name="back"/> Volver a eventos</button>
+      <div className="detalle-header">
+        <div className="detalle-empresa">{evento.EmpresaCliente}</div>
+        <div className="detalle-meta">
+          <div className="detalle-meta-item"><Icon name="calendar"/> {evento.FechaEvento || "Fecha por confirmar"}</div>
+          <div className="detalle-meta-item"><Icon name="location"/> {evento.NombreEvento || evento.EventoId}</div>
+        </div>
+      </div>
+
+      {exito && <div className="alert alert-success"><Icon name="success"/> ¡Inscripción exitosa! Quedaste registrado en las tareas seleccionadas.</div>}
+      {error && <div className="alert alert-error"><Icon name="error"/> {error}</div>}
+
+      <h2 className="tareas-section-title">Tareas disponibles</h2>
+      <p style={{fontSize:'0.85rem',color:'var(--gris-medio)',marginBottom:'16px'}}>
+        Selecciona hasta {MAX_TAREAS} tareas. Puedes compartir una tarea con otros miembros del staff.
+      </p>
+
+      {loading ? (
+        <div className="loading"><div className="spinner"/><span>Cargando tareas...</span></div>
+      ) : (
+        <div className="tareas-list">
+          {tareas.map(tarea => {
+            const isSelected = !!seleccionadas.find(t => t.ID === tarea.ID);
+            const isDisabled = !isSelected && seleccionadas.length >= MAX_TAREAS;
+            return (
+              <div
+                key={tarea.ID}
+                className={`tarea-item ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
+                onClick={() => !isDisabled && toggleTarea(tarea)}
+              >
+                <div className="tarea-checkbox">
+                  {isSelected && <span className="tarea-checkbox-check">✓</span>}
+                </div>
+                <div className="tarea-info">
+                  <div className="tarea-nombre">{tarea.Title}</div>
+                  <div className="tarea-inscritos">
+                    <Icon name="users"/> {tarea.CantidadResponsables || 0} persona{(tarea.CantidadResponsables || 0) !== 1 ? 's' : ''} inscrita{(tarea.CantidadResponsables || 0) !== 1 ? 's' : ''}
+                  </div>
+                </div>
+                {tarea.EstadoTarea && (
+                  <span style={{fontSize:'0.75rem',color:'var(--gris-medio)'}}>{tarea.EstadoTarea}</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!exito && (
+        <div className="inscripcion-panel">
+          <div className="inscripcion-panel-title">Tu inscripción</div>
+          <div className="inscripcion-counter">
+            <span>{seleccionadas.length}</span> de {MAX_TAREAS} tareas seleccionadas
+          </div>
+          {seleccionadas.length > 0 && (
+            <div style={{marginBottom:'14px'}}>
+              {seleccionadas.map(t => (
+                <div key={t.ID} style={{fontSize:'0.83rem',color:'var(--verde-dark)',padding:'3px 0'}}>
+                  <Icon name="check"/> {t.Title}
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="inscripcion-actions">
+            <button
+              className="btn-primary"
+              onClick={handleInscribir}
+              disabled={seleccionadas.length === 0 || enviando}
+            >
+              {enviando ? <><div className="spinner" style={{width:16,height:16,borderWidth:2}}/> Inscribiendo...</> : 'Confirmar inscripción'}
+            </button>
+            {seleccionadas.length > 0 && (
+              <button className="btn-secondary" onClick={() => setSeleccionadas([])}>Limpiar</button>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── MIS INSCRIPCIONES ───────────────────────────────────────────
+function MisInscripcionesScreen({ token, userEmail }) {
+  const [inscripciones, setInscripciones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    callFlow(CONFIG.flows.getInscripciones, "POST", { emailStaff: userEmail }, token)
+      .then(data => { setInscripciones(data.value || []); setLoading(false); })
+      .catch(() => { setError("No se pudieron cargar tus inscripciones."); setLoading(false); });
+  }, [userEmail, token]);
+
+  if (loading) return <div className="loading"><div className="spinner"/><span>Cargando inscripciones...</span></div>;
+  if (error) return <div className="alert alert-error"><Icon name="error"/> {error}</div>;
+
+  return (
+    <>
+      <div className="page-header">
+        <h1 className="page-title">Mis inscripciones</h1>
+        <p className="page-subtitle">Eventos en los que estás registrado</p>
+      </div>
+      {inscripciones.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-icon"><Icon name="mylist"/></div>
+          <div className="empty-title">Sin inscripciones</div>
+          <div className="empty-text">Aún no te has inscrito a ningún evento.</div>
+        </div>
+      ) : (
+        <div className="inscripciones-list">
+          {inscripciones.map(ins => (
+            <div key={ins.ID} className="inscripcion-card">
+              <div className="inscripcion-card-header">
+                <div className="inscripcion-empresa">{ins.NombreEvento}</div>
+                <span className="inscripcion-estado">
+                  <span className="inscripcion-estado-dot"/>
+                  {ins.Estado}
+                </span>
+              </div>
+              <div style={{fontSize:'0.83rem',color:'var(--gris-medio)'}}>
+                <Icon name="calendar"/> Inscrito el {new Date(ins.FechaInscripcion).toLocaleDateString('es-GT')}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── ADMIN SCREEN ────────────────────────────────────────────────
+function AdminScreen({ token }) {
+  const [inscripciones, setInscripciones] = useState([]);
+  const [eventos, setEventos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      callFlow(CONFIG.flows.getEventos, "GET", null, token),
+      callFlow(CONFIG.flows.getInscripciones, "POST", { emailStaff: "" }, token)
+    ]).then(([evData, insData]) => {
+      const items = evData.value || [];
+      const map = {};
+      items.forEach(t => { if (!map[t.EventoId]) map[t.EventoId] = t; });
+      setEventos(Object.values(map));
+      setInscripciones(insData.value || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [token]);
+
+  if (loading) return <div className="loading"><div className="spinner"/><span>Cargando datos...</span></div>;
+
+  const staffUnicos = [...new Set(inscripciones.map(i => i.EmailStaff))];
+
+  return (
+    <>
+      <div className="page-header">
+        <h1 className="page-title">Vista de administrador</h1>
+        <p className="page-subtitle">Resumen operativo de eventos e inscripciones</p>
+      </div>
+      <div className="admin-stats">
+        <div className="stat-card">
+          <div className="stat-number">{eventos.length}</div>
+          <div className="stat-label">Eventos activos</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-number">{inscripciones.length}</div>
+          <div className="stat-label">Inscripciones totales</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-number">{staffUnicos.length}</div>
+          <div className="stat-label">Staff inscrito</div>
+        </div>
+      </div>
+
+      {inscripciones.length > 0 && (
+        <>
+          <h2 className="tareas-section-title">Todas las inscripciones</h2>
+          <div className="card" style={{padding:'0', overflow:'hidden'}}>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Staff</th>
+                  <th>Email</th>
+                  <th>Evento</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inscripciones.map(ins => (
+                  <tr key={ins.ID}>
+                    <td><strong>{ins.Title}</strong></td>
+                    <td>{ins.EmailStaff}</td>
+                    <td>{ins.NombreEvento}</td>
+                    <td>
+                      <span className="inscripcion-estado" style={{fontSize:'0.75rem'}}>
+                        <span className="inscripcion-estado-dot"/>
+                        {ins.Estado}
+                      </span>
+                    </td>
+                    <td>{new Date(ins.FechaInscripcion).toLocaleDateString('es-GT')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+// ─── APP PRINCIPAL ───────────────────────────────────────────────
+function App() {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loginError, setLoginError] = useState(null);
+  const [activeTab, setActiveTab] = useState("eventos");
+  const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
+
+  const isAdmin = user?.username?.toLowerCase() === CONFIG.adminEmail;
+
+  // Intentar SSO silencioso al cargar
+  useEffect(() => {
+    msalInstance.handleRedirectPromise().then(() => {
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) {
+        const account = accounts[0];
+        if (!account.username.endsWith("@plantemos.org")) {
+          setLoginError("Solo cuentas @plantemos.org tienen acceso.");
+          msalInstance.logout();
+          return;
+        }
+        setUser(account);
+        msalInstance.acquireTokenSilent({ ...flowRequest, account }).then(r => setToken(r.accessToken));
+      }
+    });
+  }, []);
+
+  const handleLogin = async (account) => {
+    if (!account.username.endsWith("@plantemos.org")) {
+      setLoginError("Solo cuentas @plantemos.org tienen acceso a este portal.");
+      await msalInstance.logout({ onRedirectNavigate: () => false });
+      return;
+    }
+    setUser(account);
+    try {
+      const r = await msalInstance.acquireTokenSilent({ ...flowRequest, account });
+      setToken(r.accessToken);
+    } catch {
+      const r = await msalInstance.acquireTokenPopup({ ...flowRequest, account });
+      setToken(r.accessToken);
+    }
+  };
+
+  const handleLogout = () => {
+    msalInstance.logout({ onRedirectNavigate: () => false });
+    setUser(null);
+    setToken(null);
+    setEventoSeleccionado(null);
+  };
+
+  if (!user) return <LoginScreen onLogin={handleLogin} error={loginError} />;
+
+  const tabs = [
+    { id: "eventos", label: "Eventos" },
+    { id: "mis-inscripciones", label: "Mis inscripciones" },
+    ...(isAdmin ? [{ id: "admin", label: "⚙ Admin" }] : [])
+  ];
+
+  return (
+    <div className="app-shell">
+      <Navbar user={user} isAdmin={isAdmin} onLogout={handleLogout} />
+      <div className="main-content">
+        {!eventoSeleccionado && (
+          <div className="tabs">
+            {tabs.map(t => (
+              <button
+                key={t.id}
+                className={`tab ${activeTab === t.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(t.id)}
+              >{t.label}</button>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "eventos" && !eventoSeleccionado && (
+          <EventosScreen token={token} userEmail={user.username} onVerEvento={setEventoSeleccionado} />
+        )}
+        {activeTab === "eventos" && eventoSeleccionado && (
+          <DetalleEventoScreen
+            evento={eventoSeleccionado}
+            token={token}
+            userEmail={user.username}
+            userName={user.name || user.username}
+            onBack={() => setEventoSeleccionado(null)}
+          />
+        )}
+        {activeTab === "mis-inscripciones" && (
+          <MisInscripcionesScreen token={token} userEmail={user.username} />
+        )}
+        {activeTab === "admin" && isAdmin && (
+          <AdminScreen token={token} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
