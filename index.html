@@ -1129,7 +1129,18 @@ function App() {
           return;
         }
         setUser(account);
-        msalInstance.acquireTokenSilent({ ...spRequest, account }).then(r => setToken(r.accessToken));
+        msalInstance.acquireTokenSilent({ ...spRequest, account })
+          .then(r => {
+            console.log("SSO SP token OK:", r.accessToken.substring(0,30));
+            setToken(r.accessToken);
+          })
+          .catch(() => {
+            msalInstance.acquireTokenPopup({ ...spRequest, account })
+              .then(r => {
+                console.log("Popup SP token OK:", r.accessToken.substring(0,30));
+                setToken(r.accessToken);
+              });
+          });
       }
     });
   }, []);
