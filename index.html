@@ -651,6 +651,7 @@ const msalConfig = {
 };
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 const loginRequest = { scopes: ["User.Read"] };
+const flowRequest = { scopes: ["https://service.flow.microsoft.com//.default"] };
 
 // ─── API HELPER ──────────────────────────────────────────────────
 async function callFlow(url, method = "GET", body = null, token = null) {
@@ -1088,7 +1089,7 @@ function App() {
           return;
         }
         setUser(account);
-        msalInstance.acquireTokenSilent({ ...loginRequest, account }).then(r => setToken(r.accessToken));
+        msalInstance.acquireTokenSilent({ ...flowRequest, account }).then(r => setToken(r.accessToken));
       }
     });
   }, []);
@@ -1101,10 +1102,10 @@ function App() {
     }
     setUser(account);
     try {
-      const r = await msalInstance.acquireTokenSilent({ ...loginRequest, account });
+      const r = await msalInstance.acquireTokenSilent({ ...flowRequest, account });
       setToken(r.accessToken);
     } catch {
-      const r = await msalInstance.acquireTokenPopup({ ...loginRequest, account });
+      const r = await msalInstance.acquireTokenPopup({ ...flowRequest, account });
       setToken(r.accessToken);
     }
   };
