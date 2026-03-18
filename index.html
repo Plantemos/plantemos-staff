@@ -740,9 +740,9 @@ function LoginScreen({ onLogin, error }) {
       const result = await msalInstance.loginPopup(loginRequest);
       // Solicitar token de SharePoint inmediatamente después del login
       try {
-        await msalInstance.acquireTokenSilent({ ...spRequest, account: result.account });
+        await msalInstance.acquireTokenSilent({ ...loginRequest, account: result.account });
       } catch {
-        await msalInstance.acquireTokenPopup({ ...spRequest, account: result.account });
+        await msalInstance.acquireTokenPopup({ ...loginRequest, account: result.account });
       }
       onLogin(result.account);
     } catch (e) {
@@ -1149,13 +1149,13 @@ function App() {
           return;
         }
         setUser(account);
-        msalInstance.acquireTokenSilent({ ...spRequest, account })
+        msalInstance.acquireTokenSilent({ ...loginRequest, account })
           .then(r => {
             console.log("SSO SP token OK:", r.accessToken.substring(0,30));
             setToken(r.accessToken);
           })
           .catch(() => {
-            msalInstance.acquireTokenPopup({ ...spRequest, account })
+            msalInstance.acquireTokenPopup({ ...loginRequest, account })
               .then(r => {
                 console.log("Popup SP token OK:", r.accessToken.substring(0,30));
                 setToken(r.accessToken);
@@ -1175,10 +1175,10 @@ function App() {
     // Forzar token fresco de SharePoint
     let spToken;
     try {
-      const r = await msalInstance.acquireTokenSilent({ ...spRequest, account });
+      const r = await msalInstance.acquireTokenSilent({ ...loginRequest, account });
       spToken = r.accessToken;
     } catch {
-      const r = await msalInstance.acquireTokenPopup({ ...spRequest, account });
+      const r = await msalInstance.acquireTokenPopup({ ...loginRequest, account });
       spToken = r.accessToken;
     }
     console.log("SP Token scope:", spToken ? spToken.substring(0,50) : "null");
