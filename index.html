@@ -357,8 +357,11 @@ body {
     </div>
     <!-- Vista detalle -->
     <div id="vista-detalle" class="contenido hidden">
+      <div style="margin-bottom: 6px;">
+        <button class="btn-volver" onclick="volverLista()" style="padding: 4px 0; border: none; background: none; font-size: 13px; color: var(--texto-suave); cursor: pointer;">← Eventos abiertos</button>
+      </div>
       <div class="detalle-header">
-        <div>
+        <div style="flex: 1;">
           <div class="detalle-empresa" id="det-empresa"></div>
           <div class="detalle-meta">
             <div class="meta-item"><div class="meta-label">Fecha</div><div class="meta-valor verde" id="det-fecha"></div></div>
@@ -366,7 +369,6 @@ body {
             <div class="meta-item"><div class="meta-label">Inscritos</div><div class="meta-valor" id="det-inscritos"></div></div>
           </div>
         </div>
-        <button class="btn-volver" onclick="volverLista()">← Volver</button>
       </div>
       <div id="banner-inscrito" class="banner-inscrito hidden">Ya estás inscrito a este evento. Puedes agregar más tareas.</div>
       <div class="seccion-titulo">Tareas disponibles</div>
@@ -588,8 +590,8 @@ async function cargarEventos() {
 }
 
 function renderCardEvento(ev) {
-  const inscrito = S.misInscripciones.some(i => i.EventoId === ev.id);
-  const tareasInscritas = S.misInscripciones.filter(i => i.EventoId === ev.id).length;
+  const inscrito = S.misInscripciones.some(i => String(i.EventoId) === String(ev.id));
+  const tareasInscritas = S.misInscripciones.filter(i => String(i.EventoId) === String(ev.id)).length;
   return `<div class="card-evento${inscrito ? ' inscrito' : ''}" onclick="abrirEvento('${ev.id}')">
     <div class="card-empresa">${ev.empresa}</div>
     <div class="card-fecha">${ev.fecha}</div>
@@ -606,19 +608,26 @@ function renderCardEvento(ev) {
 // DETALLE EVENTO — tareas
 // ══════════════════════════════════════════
 async function abrirEvento(eventoId) {
-  S.eventoActual = S.eventos.find(e => e.id === eventoId);
+  // Comparación flexible: acepta tanto número como string
+  S.eventoActual = S.eventos.find(e => String(e.id) === String(eventoId));
   S.tareasSeleccionadas = [];
 
   document.getElementById('vista-lista').classList.add('hidden');
   document.getElementById('vista-detalle').classList.remove('hidden');
 
   const ev = S.eventoActual;
+  if (!ev) {
+    document.getElementById('lista-tareas-estado').innerHTML = '<span class="estado-error">Evento no encontrado.</span>';
+    document.getElementById('lista-tareas-estado').classList.remove('hidden');
+    return;
+  }
+
   document.getElementById('det-empresa').textContent = ev.empresa;
-  document.getElementById('det-fecha').textContent = ev.fecha;
-  document.getElementById('det-lugar').textContent = ev.lugar;
+  document.getElementById('det-fecha').textContent = ev.fecha && ev.fecha !== 'Por definir' ? ev.fecha : 'Fecha por confirmar';
+  document.getElementById('det-lugar').textContent = ev.lugar && ev.lugar !== '' ? ev.lugar : 'Lugar por confirmar';
   document.getElementById('det-inscritos').textContent = ev.totalInscritos + ' persona(s)';
 
-  const inscrito = S.misInscripciones.some(i => i.EventoId === eventoId);
+  const inscrito = S.misInscripciones.some(i => String(i.EventoId) === String(eventoId));
   document.getElementById('banner-inscrito').classList.toggle('hidden', !inscrito);
 
   // Cargar tareas del evento
@@ -630,13 +639,29 @@ async function abrirEvento(eventoId) {
   document.getElementById('accion-bar').classList.add('hidden');
 
   try {
-    const data = await callFlow(FLOWS.GET_TAREAS, { eventoId });
-    S.tareasEvento = data.value || [];
+    // eventoId siempre como string al flow
+    const data = await callFlow(FLOWS.GET_TAREAS, { eventoId: String(eventoId) });
+    const todasTareas = data.value || [];
+
+    // Deduplicar por Title para evitar contar duplicados de pruebas anteriores
+    const titlesVistos = new Set();
+    S.tareasEvento = todasTareas.filter(t => {
+      if (titlesVistos.has(t.Title)) return false;
+      titlesVistos.add(t.Title);
+      return true;
+    });
+
     estadoEl.classList.add('hidden');
 
+    if (S.tareasEvento.length === 0) {
+      estadoEl.classList.remove('hidden');
+      estadoEl.innerHTML = 'Este evento no tiene tareas asignadas aún.';
+      return;
+    }
+
     const tareasYaInscritas = S.misInscripciones
-      .filter(i => i.EventoId === eventoId)
-      .map(i => i.Title); // Title tiene formato "Empresa — Nombre tarea"
+      .filter(i => String(i.EventoId) === String(eventoId))
+      .map(i => i.Title);
 
     listEl.innerHTML = S.tareasEvento.map((t, idx) => {
       const yaInscrito = tareasYaInscritas.some(ti => ti === t.Title);
@@ -648,7 +673,8 @@ async function abrirEvento(eventoId) {
       </div>`;
     }).join('');
   } catch(e) {
-    estadoEl.innerHTML = `<span class="estado-error">Error al cargar tareas.</span>`;
+    estadoEl.classList.remove('hidden');
+    estadoEl.innerHTML = `<span class="estado-error">Error al cargar tareas. Intenta de nuevo.</span>`;
     console.error(e);
   }
 }
