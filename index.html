@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plantemos — Portal de Staff</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --verde: #657146;
+  --verde-oscuro: #4a5233;
+  --verde-bg: #f2f4ec;
+  --verde-borde: #c8d0a8;
+  --texto: #1a1a18;
+  --texto-suave: #6b6b60;
+  --superficie: #ffffff;
+  --superficie2: #f7f7f4;
+  --borde: rgba(0,0,0,0.1);
+  --radio-md: 8px;
+  --radio-lg: 12px;
+  --rojo: #d94f4f;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  background: var(--superficie2);
+  color: var(--texto);
+  min-height: 100vh;
+}
+
+/* ── UTILIDADES ── */
+.hidden { display: none !important; }
+
+/* ── NAV ── */
+.nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 24px;
+  background: var(--superficie);
+  border-bottom: 0.5px solid var(--borde);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-logo img { height: 38px; display: block; }
+.nav-logo-texto {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px; color: var(--verde); font-style: italic;
+}
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.badge-admin {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.5px;
+  background: var(--verde-bg); color: var(--verde-oscuro);
+  border: 0.5px solid var(--verde-borde);
+  padding: 3px 10px; border-radius: 20px;
+}
+.nav-email { font-size: 13px; color: var(--texto-suave); }
+.btn-link {
+  font-size: 13px; background: none; border: 0.5px solid var(--borde);
+  border-radius: var(--radio-md); padding: 5px 12px; cursor: pointer;
+  color: var(--texto-suave); font-family: 'DM Sans', sans-serif;
+}
+.btn-link:hover { background: var(--superficie2); }
+
+/* ── TABS ── */
+.tabs {
+  display: flex; background: var(--superficie);
+  border-bottom: 0.5px solid var(--borde);
+  padding: 0 24px;
+}
+.tab {
+  font-size: 13px; padding: 12px 16px; border: none; background: none;
+  cursor: pointer; color: var(--texto-suave);
+  border-bottom: 2px solid transparent; transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.tab.activo { color: var(--verde); border-bottom-color: var(--verde); font-weight: 500; }
+.tab:hover:not(.activo) { color: var(--texto); }
+
+/* ── CONTENIDO ── */
+.contenido { padding: 28px 24px; max-width: 1100px; }
+
+/* ── ESTADO (loading / error) ── */
+.estado-msg {
+  padding: 20px; font-size: 14px; color: var(--texto-suave);
+  text-align: center;
+}
+.estado-error { color: var(--rojo); }
+
+/* ── TARJETAS DE EVENTO ── */
+.eventos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 16px;
+}
+.card-evento {
+  background: var(--superficie); border: 0.5px solid var(--borde);
+  border-radius: var(--radio-lg); padding: 20px; cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.card-evento:hover { border-color: var(--verde-borde); transform: translateY(-1px); }
+.card-evento.inscrito { border-color: var(--verde); border-width: 1.5px; }
+.card-empresa {
+  font-family: 'DM Serif Display', serif;
+  font-size: 19px; margin-bottom: 4px; line-height: 1.2;
+}
+.card-fecha { font-size: 13px; color: var(--verde); font-weight: 500; margin-bottom: 2px; }
+.card-lugar { font-size: 13px; color: var(--texto-suave); margin-bottom: 16px; }
+.card-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.chip {
+  font-size: 12px; padding: 4px 10px; border-radius: 20px;
+  background: var(--superficie2); color: var(--texto-suave);
+  border: 0.5px solid var(--borde);
+}
+.chip.verde { background: var(--verde-bg); color: var(--verde-oscuro); border-color: var(--verde-borde); }
+.badge-inscrito {
+  display: inline-block; margin-top: 12px;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.4px;
+  background: var(--verde-bg); color: var(--verde-oscuro);
+  border: 0.5px solid var(--verde-borde); padding: 3px 10px; border-radius: 20px;
+}
+
+/* ── BOTONES ── */
+.btn-primario {
+  background: var(--verde); color: #fff; border: none;
+  border-radius: var(--radio-md); padding: 10px 20px;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: background 0.15s;
+}
+.btn-primario:hover { background: var(--verde-oscuro); }
+.btn-primario:disabled { background: #ccc; cursor: not-allowed; }
+.btn-secundario {
+  background: none; color: var(--texto); border: 0.5px solid var(--borde);
+  border-radius: var(--radio-md); padding: 10px 20px;
+  font-size: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+}
+.btn-secundario:hover { background: var(--superficie2); }
+
+/* ── DETALLE EVENTO ── */
+.detalle-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 24px; gap: 16px;
+}
+.detalle-empresa {
+  font-family: 'DM Serif Display', serif; font-size: 26px; line-height: 1.15;
+}
+.detalle-meta { display: flex; gap: 24px; margin-top: 8px; flex-wrap: wrap; }
+.meta-item { font-size: 13px; }
+.meta-label { color: var(--texto-suave); margin-bottom: 2px; }
+.meta-valor { font-weight: 500; }
+.meta-valor.verde { color: var(--verde); }
+.btn-volver {
+  font-size: 13px; background: none; border: 0.5px solid var(--borde);
+  border-radius: var(--radio-md); padding: 7px 14px; cursor: pointer;
+  color: var(--texto-suave); white-space: nowrap; font-family: 'DM Sans', sans-serif;
+}
+.btn-volver:hover { background: var(--superficie2); }
+
+.seccion-titulo {
+  font-size: 12px; font-weight: 500; color: var(--texto-suave);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 12px; margin-top: 24px;
+}
+
+/* ── TAREAS ── */
+.tarea-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border: 0.5px solid var(--borde);
+  border-radius: var(--radio-md); margin-bottom: 8px;
+  background: var(--superficie); cursor: pointer; transition: border-color 0.15s;
+}
+.tarea-item:hover { border-color: var(--verde-borde); }
+.tarea-item.seleccionada { border-color: var(--verde); border-width: 1.5px; background: var(--verde-bg); }
+.tarea-item.ya-inscrito { border-color: var(--verde); background: var(--verde-bg); cursor: default; }
+.tarea-check {
+  width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0;
+  border: 1.5px solid var(--borde); background: var(--superficie);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: transparent; transition: all 0.15s;
+}
+.tarea-item.seleccionada .tarea-check,
+.tarea-item.ya-inscrito .tarea-check {
+  background: var(--verde); border-color: var(--verde); color: #fff;
+}
+.tarea-nombre { font-size: 14px; flex: 1; }
+.tarea-chip {
+  font-size: 12px; padding: 3px 9px; border-radius: 20px;
+  background: var(--superficie2); color: var(--texto-suave);
+  border: 0.5px solid var(--borde); white-space: nowrap;
+}
+.tarea-item.seleccionada .tarea-chip { background: #fff; }
+
+.banner-inscrito {
+  padding: 12px 16px; background: var(--verde-bg);
+  border: 0.5px solid var(--verde-borde); border-radius: var(--radio-md);
+  font-size: 14px; color: var(--verde-oscuro); margin-bottom: 16px;
+}
+.accion-bar {
+  margin-top: 20px; padding: 16px; background: var(--verde-bg);
+  border: 0.5px solid var(--verde-borde); border-radius: var(--radio-lg);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+}
+.accion-bar-texto { font-size: 14px; }
+.accion-count { font-weight: 500; color: var(--verde); }
+
+/* ── CONFIRMACIÓN ── */
+.paso-header { text-align: center; padding: 24px 0 32px; }
+.paso-num { font-size: 12px; letter-spacing: 1px; color: var(--texto-suave); margin-bottom: 8px; text-transform: uppercase; }
+.paso-titulo { font-family: 'DM Serif Display', serif; font-size: 24px; }
+.conf-card {
+  background: var(--superficie); border: 0.5px solid var(--borde);
+  border-radius: var(--radio-lg); padding: 24px; max-width: 500px; margin: 0 auto;
+}
+.conf-empresa { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 16px; }
+.conf-fila {
+  display: flex; justify-content: space-between; padding: 9px 0;
+  border-bottom: 0.5px solid var(--borde); font-size: 14px; gap: 16px;
+}
+.conf-fila:last-of-type { border-bottom: none; }
+.conf-label { color: var(--texto-suave); flex-shrink: 0; }
+.conf-valor { font-weight: 500; text-align: right; }
+.conf-tareas-lista { font-size: 13px; color: var(--verde-oscuro); line-height: 1.9; text-align: right; }
+.btn-grupo { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; }
+
+/* ── ÉXITO ── */
+.exito-wrap { text-align: center; padding: 80px 24px; }
+.exito-icono {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--verde-bg); border: 2px solid var(--verde-borde);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px; font-size: 26px; color: var(--verde);
+}
+.exito-titulo { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 8px; }
+.exito-sub { font-size: 14px; color: var(--texto-suave); margin-bottom: 28px; line-height: 1.6; }
+
+/* ── MIS INSCRIPCIONES ── */
+.inscripcion-card {
+  background: var(--superficie); border: 0.5px solid var(--borde);
+  border-radius: var(--radio-lg); padding: 20px; margin-bottom: 16px;
+}
+.inscripcion-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 14px; gap: 12px;
+}
+.inscripcion-empresa { font-family: 'DM Serif Display', serif; font-size: 18px; margin-bottom: 4px; }
+.inscripcion-meta { font-size: 13px; color: var(--verde); }
+.inscripcion-tarea {
+  font-size: 13px; padding: 7px 0;
+  border-bottom: 0.5px solid var(--borde);
+  display: flex; gap: 8px; align-items: center;
+}
+.inscripcion-tarea:last-child { border-bottom: none; }
+.check-verde { color: var(--verde); font-size: 12px; }
+
+/* ── ADMIN ── */
+.admin-subtabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.admin-stab {
+  font-size: 13px; padding: 7px 14px; border-radius: 20px;
+  border: 0.5px solid var(--borde); background: none; cursor: pointer;
+  color: var(--texto-suave); font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+}
+.admin-stab.activo { background: var(--verde); color: #fff; border-color: var(--verde); }
+.tabla-admin { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tabla-admin th {
+  text-align: left; padding: 8px 12px; font-weight: 500;
+  color: var(--texto-suave); border-bottom: 0.5px solid var(--borde); font-size: 12px;
+}
+.tabla-admin td { padding: 10px 12px; border-bottom: 0.5px solid var(--borde); }
+.tabla-admin tr:last-child td { border-bottom: none; }
+.tabla-admin tr:hover td { background: var(--superficie2); }
+.sin-asignar { color: var(--rojo); font-style: italic; }
+.con-asignado { color: var(--verde); }
+
+/* ── LOGIN ── */
+.login-wrap {
+  min-height: 100vh; display: flex; align-items: center;
+  justify-content: center; padding: 40px 20px;
+}
+.login-card {
+  background: var(--superficie); border: 0.5px solid var(--borde);
+  border-radius: var(--radio-lg); padding: 44px 40px;
+  max-width: 360px; width: 100%; text-align: center;
+}
+.login-logo { height: 48px; margin: 0 auto 8px; display: block; }
+.login-logo-txt {
+  font-family: 'DM Serif Display', serif; font-size: 30px;
+  color: var(--verde); font-style: italic; margin-bottom: 8px;
+}
+.login-tagline { font-size: 13px; color: var(--texto-suave); margin-bottom: 36px; line-height: 1.5; }
+.login-label { font-size: 12px; color: var(--texto-suave); margin-bottom: 6px; display: block; text-align: left; }
+.login-input {
+  width: 100%; padding: 10px 12px; font-size: 14px;
+  border: 0.5px solid var(--borde); border-radius: var(--radio-md);
+  background: var(--superficie2); color: var(--texto);
+  font-family: 'DM Sans', sans-serif; margin-bottom: 12px;
+  transition: border-color 0.15s;
+}
+.login-input:focus { outline: none; border-color: var(--verde); }
+.login-error { font-size: 12px; color: var(--rojo); margin-bottom: 12px; text-align: left; }
+.login-nota { font-size: 12px; color: var(--texto-suave); margin-top: 14px; }
+
+/* ── SPINNER ── */
+.spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid var(--verde-borde); border-top-color: var(--verde);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+  vertical-align: middle; margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="p-login">
+  <div class="login-wrap">
+    <div class="login-card">
+      <img class="login-logo" src="https://plantemos.org/wp-content/uploads/2026/03/plantemos_logotipo_principal_transparente-2022-04-25-17_21_33.png" alt="Plantemos" onerror="this.style.display='none'; document.getElementById('login-logo-txt').style.display='block';" />
+      <div id="login-logo-txt" class="login-logo-txt" style="display:none">Plantemos</div>
+      <div class="login-tagline">Portal de staff<br>Eventos de reforestación</div>
+      <label class="login-label">Correo institucional</label>
+      <input class="login-input" type="email" id="input-email" placeholder="tu@plantemos.org" />
+      <div class="login-error hidden" id="login-error">Solo cuentas @plantemos.org tienen acceso.</div>
+      <button class="btn-primario" style="width:100%" onclick="login()">Ingresar</button>
+      <div class="login-nota">Acceso exclusivo para equipo Plantemos</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<div id="p-main" class="hidden">
+  <nav class="nav">
+    <div class="nav-logo">
+      <img src="https://plantemos.org/wp-content/uploads/2026/03/plantemos_logotipo_principal_transparente-2022-04-25-17_21_33.png" alt="Plantemos" height="38"
+        onerror="this.style.display='none'; document.getElementById('nav-logo-txt').style.display='block';" />
+      <span id="nav-logo-txt" class="nav-logo-texto" style="display:none">Plantemos</span>
+    </div>
+    <div class="nav-right">
+      <span id="nav-badge-admin" class="badge-admin hidden">Admin</span>
+      <span class="nav-email" id="nav-email-txt"></span>
+      <button class="btn-link" onclick="logout()">Salir</button>
+    </div>
+  </nav>
+  <div class="tabs">
+    <button class="tab activo" id="tab-btn-eventos" onclick="cambiarTab('eventos')">Eventos abiertos</button>
+    <button class="tab" id="tab-btn-mis" onclick="cambiarTab('mis')">Mis inscripciones</button>
+    <button class="tab hidden" id="tab-btn-admin" onclick="cambiarTab('admin')">Administración</button>
+  </div>
+
+  <!-- TAB EVENTOS -->
+  <div id="tab-eventos">
+    <!-- Vista lista -->
+    <div id="vista-lista" class="contenido">
+      <div id="eventos-estado" class="estado-msg"><span class="spinner"></span> Cargando eventos...</div>
+      <div id="eventos-grid" class="eventos-grid hidden"></div>
+    </div>
+    <!-- Vista detalle -->
+    <div id="vista-detalle" class="contenido hidden">
+      <div class="detalle-header">
+        <div>
+          <div class="detalle-empresa" id="det-empresa"></div>
+          <div class="detalle-meta">
+            <div class="meta-item"><div class="meta-label">Fecha</div><div class="meta-valor verde" id="det-fecha"></div></div>
+            <div class="meta-item"><div class="meta-label">Lugar</div><div class="meta-valor" id="det-lugar"></div></div>
+            <div class="meta-item"><div class="meta-label">Inscritos</div><div class="meta-valor" id="det-inscritos"></div></div>
+          </div>
+        </div>
+        <button class="btn-volver" onclick="volverLista()">← Volver</button>
+      </div>
+      <div id="banner-inscrito" class="banner-inscrito hidden">Ya estás inscrito a este evento. Puedes agregar más tareas.</div>
+      <div class="seccion-titulo">Tareas disponibles</div>
+      <div id="lista-tareas-estado" class="estado-msg hidden"><span class="spinner"></span> Cargando tareas...</div>
+      <div id="lista-tareas"></div>
+      <div id="accion-bar" class="accion-bar hidden">
+        <div class="accion-bar-texto">Tareas seleccionadas: <span class="accion-count" id="count-sel">0</span></div>
+        <button class="btn-primario" onclick="irConfirmar()">Confirmar inscripción →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB MIS INSCRIPCIONES -->
+  <div id="tab-mis" class="contenido hidden">
+    <div id="mis-estado" class="estado-msg"><span class="spinner"></span> Cargando...</div>
+    <div id="mis-contenido" class="hidden"></div>
+  </div>
+
+  <!-- TAB ADMIN -->
+  <div id="tab-admin" class="contenido hidden">
+    <div class="admin-subtabs">
+      <button class="admin-stab activo" onclick="adminStab('eventos')">Todos los eventos</button>
+      <button class="admin-stab" onclick="adminStab('personas')">Por persona</button>
+      <button class="admin-stab" onclick="adminStab('vacias')">Sin responsable</button>
+    </div>
+    <div id="admin-contenido"></div>
+  </div>
+</div>
+
+<!-- ══════════════ CONFIRMAR ══════════════ -->
+<div id="p-confirmar" class="hidden">
+  <nav class="nav">
+    <div class="nav-logo">
+      <img src="https://plantemos.org/wp-content/uploads/2026/03/plantemos_logotipo_principal_transparente-2022-04-25-17_21_33.png" alt="Plantemos" height="38"
+        onerror="this.style.display='none';" />
+    </div>
+    <div class="nav-right"><span class="nav-email" id="conf-nav-email"></span></div>
+  </nav>
+  <div class="contenido">
+    <div class="paso-header">
+      <div class="paso-num">Paso 2 de 2</div>
+      <div class="paso-titulo">Confirma tu inscripción</div>
+    </div>
+    <div class="conf-card">
+      <div class="conf-empresa" id="conf-empresa"></div>
+      <div class="conf-fila"><span class="conf-label">Fecha</span><span class="conf-valor" id="conf-fecha"></span></div>
+      <div class="conf-fila"><span class="conf-label">Lugar</span><span class="conf-valor" id="conf-lugar"></span></div>
+      <div class="conf-fila"><span class="conf-label">Tareas</span><div class="conf-tareas-lista" id="conf-tareas"></div></div>
+      <div class="btn-grupo">
+        <button class="btn-secundario" onclick="irMain()">← Editar</button>
+        <button class="btn-primario" id="btn-confirmar" onclick="confirmarInscripcion()">Confirmar →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ÉXITO ══════════════ -->
+<div id="p-exito" class="hidden">
+  <nav class="nav">
+    <div class="nav-logo">
+      <img src="https://plantemos.org/wp-content/uploads/2026/03/plantemos_logotipo_principal_transparente-2022-04-25-17_21_33.png" alt="Plantemos" height="38"
+        onerror="this.style.display='none';" />
+    </div>
+  </nav>
+  <div class="exito-wrap">
+    <div class="exito-icono">✓</div>
+    <div class="exito-titulo">¡Inscripción confirmada!</div>
+    <div class="exito-sub" id="exito-msg"></div>
+    <button class="btn-primario" onclick="irMisInscripciones()">Ver mis inscripciones</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIGURACIÓN — URLs de flows HTTP
+// ══════════════════════════════════════════
+const FLOWS = {
+  GET_EVENTOS:       'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/f0523be9bc374fbab8ef5d26a852546f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=U0IH7c2JI1fqA5TcDDVNxSW27OkucnMfx0w4E51qptg',
+  GET_TAREAS:        'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2cbb1e46543b433ca1a6db07d37dd5a0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=gwWrMLmFWqFWStYPqletQWJ7ljB_w1NK-FND7J7tpD0',
+  POST_INSCRIBIR:    'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/122f2cd8cc0841c6929168b2b89b7e33/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=fMm9TnT9fRMawxiaZj3k_EkFGpcOFCto6-ZGrTShdbY',
+  GET_INSCRIPCIONES: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/7d260ce40ac7421d97e86ad97597b28f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=DDXtwdh0iMZDhEvTpM-BKaqPaWRDZepCrQ2a5Onj7nU'
+};
+
+const ADMIN_EMAIL = 'jcm@plantemos.org';
+
+// ══════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════
+let S = {
+  usuario: null,
+  esAdmin: false,
+  eventos: [],           // lista agrupada de eventos
+  tareasEvento: [],      // tareas del evento actual
+  eventoActual: null,
+  tareasSeleccionadas: [],
+  misInscripciones: [],
+  todasInscripciones: [], // para admin
+  adminStabActivo: 'eventos',
+};
+
+// ══════════════════════════════════════════
+// PANTALLAS
+// ══════════════════════════════════════════
+function mostrar(id) {
+  ['p-login','p-main','p-confirmar','p-exito'].forEach(p => {
+    document.getElementById(p).classList.toggle('hidden', p !== id);
+  });
+}
+
+function irMain() { mostrar('p-main'); }
+
+// ══════════════════════════════════════════
+// LOGIN / LOGOUT
+// ══════════════════════════════════════════
+function login() {
+  const email = document.getElementById('input-email').value.trim().toLowerCase();
+  const errEl = document.getElementById('login-error');
+  if (!email.endsWith('@plantemos.org')) {
+    errEl.classList.remove('hidden'); return;
+  }
+  errEl.classList.add('hidden');
+  S.usuario = email;
+  S.esAdmin = email === ADMIN_EMAIL;
+  document.getElementById('nav-email-txt').textContent = email;
+  document.getElementById('conf-nav-email').textContent = email;
+  if (S.esAdmin) {
+    document.getElementById('nav-badge-admin').classList.remove('hidden');
+    document.getElementById('tab-btn-admin').classList.remove('hidden');
+  }
+  mostrar('p-main');
+  cambiarTab('eventos');
+  cargarEventos();
+}
+
+document.getElementById('input-email').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+
+function logout() {
+  S = { usuario:null, esAdmin:false, eventos:[], tareasEvento:[], eventoActual:null, tareasSeleccionadas:[], misInscripciones:[], todasInscripciones:[], adminStabActivo:'eventos' };
+  document.getElementById('input-email').value = '';
+  document.getElementById('nav-badge-admin').classList.add('hidden');
+  document.getElementById('tab-btn-admin').classList.add('hidden');
+  mostrar('p-login');
+}
+
+// ══════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════
+function cambiarTab(tab) {
+  ['eventos','mis','admin'].forEach(t => {
+    document.getElementById(`tab-btn-${t === 'mis' ? 'mis' : t}`).classList.toggle('activo', t === tab);
+    document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+  });
+  if (tab === 'mis') cargarMisInscripciones();
+  if (tab === 'admin') { cargarTodasInscripciones(); }
+}
+
+// ══════════════════════════════════════════
+// API — llamadas a Power Automate
+// ══════════════════════════════════════════
+async function callFlow(url, body = null) {
+  const opts = {
+    method: body ? 'POST' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {})
+  };
+  const res = await fetch(url, opts);
+  if (!res.ok) throw new Error(`Error ${res.status}`);
+  const text = await res.text();
+  return text ? JSON.parse(text) : {};
+}
+
+// ══════════════════════════════════════════
+// EVENTOS — cargar y renderizar
+// ══════════════════════════════════════════
+async function cargarEventos() {
+  const estadoEl = document.getElementById('eventos-estado');
+  const gridEl = document.getElementById('eventos-grid');
+  estadoEl.classList.remove('hidden');
+  gridEl.classList.add('hidden');
+  estadoEl.innerHTML = '<span class="spinner"></span> Cargando eventos...';
+
+  try {
+    const data = await callFlow(FLOWS.GET_EVENTOS);
+    // El flow devuelve { value: [...items de TareasEvento] }
+    const items = data.value || [];
+
+    // Agrupar por EventoId — tomar datos del primer item de cada grupo
+    const mapaEventos = {};
+    items.forEach(item => {
+      const id = item.EventoId;
+      if (!mapaEventos[id]) {
+        mapaEventos[id] = {
+          id,
+          empresa: item.EmpresaCliente || item.NombreEvento || '(Sin nombre)',
+          fecha: item.FechaEvento || '',
+          lugar: item.Lugarevento || '',
+          totalTareas: 0,
+          totalInscritos: 0,
+        };
+      }
+      mapaEventos[id].totalTareas++;
+      mapaEventos[id].totalInscritos = Math.max(mapaEventos[id].totalInscritos, item.CantidadResponsables || 0);
+    });
+
+    S.eventos = Object.values(mapaEventos);
+
+    if (S.eventos.length === 0) {
+      estadoEl.innerHTML = 'No hay eventos abiertos por el momento.';
+      return;
+    }
+
+    gridEl.innerHTML = S.eventos.map(ev => renderCardEvento(ev)).join('');
+    estadoEl.classList.add('hidden');
+    gridEl.classList.remove('hidden');
+  } catch(e) {
+    estadoEl.innerHTML = `<span class="estado-error">Error al cargar eventos. Intenta de nuevo.</span>`;
+    console.error(e);
+  }
+}
+
+function renderCardEvento(ev) {
+  const inscrito = S.misInscripciones.some(i => i.EventoId === ev.id);
+  const tareasInscritas = S.misInscripciones.filter(i => i.EventoId === ev.id).length;
+  return `<div class="card-evento${inscrito ? ' inscrito' : ''}" onclick="abrirEvento('${ev.id}')">
+    <div class="card-empresa">${ev.empresa}</div>
+    <div class="card-fecha">${ev.fecha}</div>
+    <div class="card-lugar">${ev.lugar}</div>
+    <div class="card-stats">
+      <span class="chip">${ev.totalTareas} tareas</span>
+      <span class="chip${ev.totalInscritos > 0 ? ' verde' : ''}">${ev.totalInscritos} inscritos</span>
+    </div>
+    ${inscrito ? `<div class="badge-inscrito">Inscrito · ${tareasInscritas} tarea${tareasInscritas !== 1 ? 's' : ''}</div>` : ''}
+  </div>`;
+}
+
+// ══════════════════════════════════════════
+// DETALLE EVENTO — tareas
+// ══════════════════════════════════════════
+async function abrirEvento(eventoId) {
+  S.eventoActual = S.eventos.find(e => e.id === eventoId);
+  S.tareasSeleccionadas = [];
+
+  document.getElementById('vista-lista').classList.add('hidden');
+  document.getElementById('vista-detalle').classList.remove('hidden');
+
+  const ev = S.eventoActual;
+  document.getElementById('det-empresa').textContent = ev.empresa;
+  document.getElementById('det-fecha').textContent = ev.fecha;
+  document.getElementById('det-lugar').textContent = ev.lugar;
+  document.getElementById('det-inscritos').textContent = ev.totalInscritos + ' persona(s)';
+
+  const inscrito = S.misInscripciones.some(i => i.EventoId === eventoId);
+  document.getElementById('banner-inscrito').classList.toggle('hidden', !inscrito);
+
+  // Cargar tareas del evento
+  const listEl = document.getElementById('lista-tareas');
+  const estadoEl = document.getElementById('lista-tareas-estado');
+  listEl.innerHTML = '';
+  estadoEl.classList.remove('hidden');
+  estadoEl.innerHTML = '<span class="spinner"></span> Cargando tareas...';
+  document.getElementById('accion-bar').classList.add('hidden');
+
+  try {
+    const data = await callFlow(FLOWS.GET_TAREAS, { eventoId });
+    S.tareasEvento = data.value || [];
+    estadoEl.classList.add('hidden');
+
+    const tareasYaInscritas = S.misInscripciones
+      .filter(i => i.EventoId === eventoId)
+      .map(i => i.Title); // Title tiene formato "Empresa — Nombre tarea"
+
+    listEl.innerHTML = S.tareasEvento.map((t, idx) => {
+      const yaInscrito = tareasYaInscritas.some(ti => ti === t.Title);
+      return `<div class="tarea-item${yaInscrito ? ' ya-inscrito' : ''}" id="titem-${idx}"
+        onclick="${yaInscrito ? '' : `toggleTarea(${idx})`}">
+        <div class="tarea-check">✓</div>
+        <span class="tarea-nombre">${extraerNombreTarea(t.Title)}</span>
+        <span class="tarea-chip">${yaInscrito ? 'Ya inscrito' : (t.CantidadResponsables || 0) + ' personas'}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    estadoEl.innerHTML = `<span class="estado-error">Error al cargar tareas.</span>`;
+    console.error(e);
+  }
+}
+
+function extraerNombreTarea(title) {
+  // El title tiene formato "Empresa — Nombre tarea"
+  const partes = title.split(' — ');
+  return partes.length > 1 ? partes.slice(1).join(' — ') : title;
+}
+
+function toggleTarea(idx) {
+  const pos = S.tareasSeleccionadas.indexOf(idx);
+  const el = document.getElementById(`titem-${idx}`);
+  if (pos === -1) { S.tareasSeleccionadas.push(idx); el.classList.add('seleccionada'); }
+  else { S.tareasSeleccionadas.splice(pos, 1); el.classList.remove('seleccionada'); }
+  const n = S.tareasSeleccionadas.length;
+  document.getElementById('count-sel').textContent = n;
+  document.getElementById('accion-bar').classList.toggle('hidden', n === 0);
+}
+
+function volverLista() {
+  document.getElementById('vista-lista').classList.remove('hidden');
+  document.getElementById('vista-detalle').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════
+// CONFIRMAR INSCRIPCIÓN
+// ══════════════════════════════════════════
+function irConfirmar() {
+  const ev = S.eventoActual;
+  document.getElementById('conf-empresa').textContent = ev.empresa;
+  document.getElementById('conf-fecha').textContent = ev.fecha;
+  document.getElementById('conf-lugar').textContent = ev.lugar;
+  document.getElementById('conf-tareas').innerHTML = S.tareasSeleccionadas
+    .map(i => `· ${extraerNombreTarea(S.tareasEvento[i].Title)}`).join('<br>');
+  mostrar('p-confirmar');
+}
+
+async function confirmarInscripcion() {
+  const btn = document.getElementById('btn-confirmar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Guardando...';
+
+  const ev = S.eventoActual;
+  const nombreCompleto = S.usuario.split('@')[0].replace('.', ' ');
+
+  const payload = {
+    nombreStaff: nombreCompleto,
+    emailStaff: S.usuario,
+    eventoId: ev.id,
+    nombreEvento: ev.empresa,
+    tareasSeleccionadas: S.tareasSeleccionadas.map(i => ({
+      tareaId: S.tareasEvento[i].ID || i,
+      nombreTarea: extraerNombreTarea(S.tareasEvento[i].Title)
+    }))
+  };
+
+  try {
+    await callFlow(FLOWS.POST_INSCRIBIR, payload);
+    document.getElementById('exito-msg').textContent =
+      `Te inscribiste a "${ev.empresa}" con ${S.tareasSeleccionadas.length} tarea(s) asignada(s). Recibirás una confirmación por correo.`;
+    // Refrescar inscripciones localmente
+    await cargarMisInscripcionesData();
+    mostrar('p-exito');
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Confirmar →';
+    alert('Hubo un error al guardar. Intenta de nuevo.');
+    console.error(e);
+  }
+}
+
+// ══════════════════════════════════════════
+// MIS INSCRIPCIONES
+// ══════════════════════════════════════════
+async function cargarMisInscripcionesData() {
+  try {
+    const data = await callFlow(FLOWS.GET_INSCRIPCIONES, { emailStaff: S.usuario });
+    S.misInscripciones = data.value || [];
+  } catch(e) { console.error('Error cargando inscripciones:', e); }
+}
+
+async function cargarMisInscripciones() {
+  const estadoEl = document.getElementById('mis-estado');
+  const contEl = document.getElementById('mis-contenido');
+  estadoEl.classList.remove('hidden');
+  estadoEl.innerHTML = '<span class="spinner"></span> Cargando...';
+  contEl.classList.add('hidden');
+
+  await cargarMisInscripcionesData();
+
+  estadoEl.classList.add('hidden');
+  contEl.classList.remove('hidden');
+
+  if (S.misInscripciones.length === 0) {
+    contEl.innerHTML = '<p class="estado-msg">Aún no te has inscrito a ningún evento. Explora los eventos disponibles.</p>';
+    return;
+  }
+
+  // Agrupar por EventoId
+  const porEvento = {};
+  S.misInscripciones.forEach(item => {
+    if (!porEvento[item.EventoId]) porEvento[item.EventoId] = { nombre: item.NombreEvento, tareas: [] };
+    porEvento[item.EventoId].tareas.push(extraerNombreTarea(item.Title));
+  });
+
+  contEl.innerHTML = Object.entries(porEvento).map(([evId, ev]) => `
+    <div class="inscripcion-card">
+      <div class="inscripcion-header">
+        <div>
+          <div class="inscripcion-empresa">${ev.nombre}</div>
+          <div class="inscripcion-meta">${ev.tareas.length} tarea${ev.tareas.length !== 1 ? 's' : ''} asignada${ev.tareas.length !== 1 ? 's' : ''}</div>
+        </div>
+        <button class="btn-secundario" style="font-size:12px; padding:6px 12px" onclick="abrirEvento('${evId}')">+ Agregar tareas</button>
+      </div>
+      <div style="font-size:12px; font-weight:500; color:var(--texto-suave); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Mis tareas</div>
+      ${ev.tareas.map(t => `<div class="inscripcion-tarea"><span class="check-verde">✓</span> ${t}</div>`).join('')}
+    </div>`).join('');
+
+  // Refrescar grid de eventos también
+  document.getElementById('eventos-grid').innerHTML = S.eventos.map(ev => renderCardEvento(ev)).join('');
+}
+
+function irMisInscripciones() { mostrar('p-main'); cambiarTab('mis'); }
+
+// ══════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════
+async function cargarTodasInscripciones() {
+  // Para admin necesitamos todas las inscripciones — por ahora usamos las del usuario
+  // En una versión futura se agregaría un flow GET_AllInscripciones para JCM
+  renderAdmin();
+}
+
+function adminStab(stab) {
+  S.adminStabActivo = stab;
+  document.querySelectorAll('.admin-stab').forEach((el, i) => {
+    el.classList.toggle('activo', ['eventos','personas','vacias'][i] === stab);
+  });
+  renderAdmin();
+}
+
+function renderAdmin() {
+  const cont = document.getElementById('admin-contenido');
+  if (S.adminStabActivo === 'eventos') {
+    if (S.eventos.length === 0) { cont.innerHTML = '<p class="estado-msg">No hay eventos cargados.</p>'; return; }
+    cont.innerHTML = `<table class="tabla-admin">
+      <thead><tr><th>Empresa</th><th>Fecha</th><th>Lugar</th><th>Tareas totales</th><th>Inscritos</th></tr></thead>
+      <tbody>${S.eventos.map(ev => `<tr>
+        <td style="font-weight:500">${ev.empresa}</td>
+        <td>${ev.fecha}</td><td>${ev.lugar}</td>
+        <td>${ev.totalTareas}</td>
+        <td class="${ev.totalInscritos > 0 ? 'con-asignado' : ''}">${ev.totalInscritos}</td>
+      </tr>`).join('')}</tbody></table>`;
+  } else if (S.adminStabActivo === 'personas') {
+    if (S.misInscripciones.length === 0) { cont.innerHTML = '<p class="estado-msg">No hay inscripciones registradas.</p>'; return; }
+    cont.innerHTML = `<table class="tabla-admin">
+      <thead><tr><th>Staff</th><th>Evento</th><th>Tarea</th></tr></thead>
+      <tbody>${S.misInscripciones.map(i => `<tr>
+        <td style="font-weight:500">${i.Title?.split('@')[0] || i.EmailStaff}</td>
+        <td>${i.NombreEvento}</td>
+        <td style="font-size:12px; color:var(--texto-suave)">${extraerNombreTarea(i.Title)}</td>
+      </tr>`).join('')}</tbody></table>`;
+  } else {
+    if (S.tareasEvento.length === 0) {
+      cont.innerHTML = '<p class="estado-msg">Selecciona un evento primero para ver tareas sin responsable.</p>'; return;
+    }
+    const vacias = S.tareasEvento.filter(t => !t.CantidadResponsables || t.CantidadResponsables === 0);
+    if (vacias.length === 0) { cont.innerHTML = '<p class="estado-msg" style="color:var(--verde)">Todas las tareas tienen responsable asignado.</p>'; return; }
+    cont.innerHTML = `<table class="tabla-admin">
+      <thead><tr><th>Evento</th><th>Tarea</th><th>Estado</th></tr></thead>
+      <tbody>${vacias.map(t => `<tr>
+        <td>${t.NombreEvento}</td>
+        <td>${extraerNombreTarea(t.Title)}</td>
+        <td><span class="sin-asignar">Sin asignar</span></td>
+      </tr>`).join('')}</tbody></table>`;
+  }
+}
+</script>
+</body>
+</html>
