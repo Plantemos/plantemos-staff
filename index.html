@@ -724,15 +724,16 @@ async function confirmarInscripcion() {
   const payload = {
     nombreStaff: nombreCompleto,
     emailStaff: S.usuario,
-    eventoId: ev.id,
+    eventoId: String(ev.id),
     nombreEvento: ev.empresa,
     tareasSeleccionadas: S.tareasSeleccionadas.map(i => ({
-      tareaId: S.tareasEvento[i].ID || i,
+      tareaId: parseInt(S.tareasEvento[i].ID) || i,
       nombreTarea: extraerNombreTarea(S.tareasEvento[i].Title)
     }))
   };
 
   try {
+    console.log('Payload enviado a InscribirStaff:', JSON.stringify(payload, null, 2));
     await callFlow(FLOWS.POST_INSCRIBIR, payload);
     document.getElementById('exito-msg').textContent =
       `Te inscribiste a "${ev.empresa}" con ${S.tareasSeleccionadas.length} tarea(s) asignada(s). Recibirás una confirmación por correo.`;
