@@ -449,7 +449,8 @@ const FLOWS = {
   GET_EVENTOS:       'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/f0523be9bc374fbab8ef5d26a852546f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=U0IH7c2JI1fqA5TcDDVNxSW27OkucnMfx0w4E51qptg',
   GET_TAREAS:        'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2cbb1e46543b433ca1a6db07d37dd5a0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=gwWrMLmFWqFWStYPqletQWJ7ljB_w1NK-FND7J7tpD0',
   POST_INSCRIBIR:    'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/122f2cd8cc0841c6929168b2b89b7e33/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=fMm9TnT9fRMawxiaZj3k_EkFGpcOFCto6-ZGrTShdbY',
-  GET_INSCRIPCIONES: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/7d260ce40ac7421d97e86ad97597b28f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=DDXtwdh0iMZDhEvTpM-BKaqPaWRDZepCrQ2a5Onj7nU'
+  GET_INSCRIPCIONES: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/7d260ce40ac7421d97e86ad97597b28f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=DDXtwdh0iMZDhEvTpM-BKaqPaWRDZepCrQ2a5Onj7nU',
+  GET_MIS_TAREAS:    'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/cd2ac4ad90cb450d82ef33100b7ecc0c/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JfyGv4poRSHTBVViq3_K1eULs9K_obK1GTTv8t_ORNQ'
 };
 
 const ADMIN_EMAIL = 'jcm@plantemos.org';
@@ -753,9 +754,9 @@ async function confirmarInscripcion() {
 // ══════════════════════════════════════════
 async function cargarMisInscripcionesData() {
   try {
-    const data = await callFlow(FLOWS.GET_INSCRIPCIONES, { emailStaff: S.usuario });
+    const data = await callFlow(FLOWS.GET_MIS_TAREAS, { emailStaff: S.usuario });
     S.misInscripciones = data.value || [];
-  } catch(e) { console.error('Error cargando inscripciones:', e); }
+  } catch(e) { console.error('Error cargando mis tareas:', e); }
 }
 
 async function cargarMisInscripciones() {
@@ -778,8 +779,15 @@ async function cargarMisInscripciones() {
   // Agrupar por EventoId
   const porEvento = {};
   S.misInscripciones.forEach(item => {
-    if (!porEvento[item.EventoId]) porEvento[item.EventoId] = { nombre: item.NombreEvento, tareas: [] };
-    porEvento[item.EventoId].tareas.push(extraerNombreTarea(item.Title));
+    const evId = String(item.EventoId);
+    if (!porEvento[evId]) {
+      porEvento[evId] = {
+        nombre: item.NombreEvento || item.EmpresaCliente,
+        fecha: item.FechaEvento || '',
+        tareas: []
+      };
+    }
+    porEvento[evId].tareas.push(extraerNombreTarea(item.Title));
   });
 
   contEl.innerHTML = Object.entries(porEvento).map(([evId, ev]) => `
@@ -787,9 +795,9 @@ async function cargarMisInscripciones() {
       <div class="inscripcion-header">
         <div>
           <div class="inscripcion-empresa">${ev.nombre}</div>
-          <div class="inscripcion-meta">${ev.tareas.length} tarea${ev.tareas.length !== 1 ? 's' : ''} asignada${ev.tareas.length !== 1 ? 's' : ''}</div>
+          <div class="inscripcion-meta">${ev.fecha ? ev.fecha + ' · ' : ''}${ev.tareas.length} tarea${ev.tareas.length !== 1 ? 's' : ''} asignada${ev.tareas.length !== 1 ? 's' : ''}</div>
         </div>
-        <button class="btn-secundario" style="font-size:12px; padding:6px 12px" onclick="abrirEvento('${evId}')">+ Agregar tareas</button>
+        <button class="btn-secundario" style="font-size:12px; padding:6px 12px" onclick="abrirEvento('${evId}'); cambiarTab('eventos')">+ Agregar tareas</button>
       </div>
       <div style="font-size:12px; font-weight:500; color:var(--texto-suave); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Mis tareas</div>
       ${ev.tareas.map(t => `<div class="inscripcion-tarea"><span class="check-verde">✓</span> ${t}</div>`).join('')}
