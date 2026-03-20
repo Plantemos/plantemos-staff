@@ -686,6 +686,18 @@ function extraerNombreTarea(title) {
   return partes.length > 1 ? partes.slice(1).join(' — ') : title;
 }
 
+
+function parsearTareasAceptadas(tareasStr) {
+  if (!tareasStr) return [];
+  try {
+    const parsed = JSON.parse(tareasStr);
+    if (Array.isArray(parsed)) return parsed.map(t => t.nombreTarea || String(t));
+    if (parsed.nombreTarea) return [parsed.nombreTarea];
+    return [String(tareasStr)];
+  } catch(e) {
+    return tareasStr.split(',').map(t => t.trim()).filter(Boolean);
+  }
+}
 function toggleTarea(idx) {
   const pos = S.tareasSeleccionadas.indexOf(idx);
   const el = document.getElementById(`titem-${idx}`);
@@ -754,9 +766,9 @@ async function confirmarInscripcion() {
 // ══════════════════════════════════════════
 async function cargarMisInscripcionesData() {
   try {
-    const data = await callFlow(FLOWS.GET_MIS_TAREAS, { emailStaff: S.usuario });
+    const data = await callFlow(FLOWS.GET_INSCRIPCIONES, { emailStaff: S.usuario });
     S.misInscripciones = data.value || [];
-  } catch(e) { console.error('Error cargando mis tareas:', e); }
+  } catch(e) { console.error('Error cargando mis inscripciones:', e); }
 }
 
 async function cargarMisInscripciones() {
@@ -776,18 +788,17 @@ async function cargarMisInscripciones() {
     return;
   }
 
-  // Agrupar por EventoId
+  // Agrupar por EventoId — un registro por evento en StaffEventos
   const porEvento = {};
   S.misInscripciones.forEach(item => {
     const evId = String(item.EventoId);
     if (!porEvento[evId]) {
       porEvento[evId] = {
-        nombre: item.NombreEvento || item.EmpresaCliente,
-        fecha: item.FechaEvento || '',
-        tareas: []
+        nombre: item.NombreEvento,
+        fecha: '',
+        tareas: parsearTareasAceptadas(item.TareasAceptadas)
       };
     }
-    porEvento[evId].tareas.push(extraerNombreTarea(item.Title));
   });
 
   contEl.innerHTML = Object.entries(porEvento).map(([evId, ev]) => `
@@ -795,12 +806,15 @@ async function cargarMisInscripciones() {
       <div class="inscripcion-header">
         <div>
           <div class="inscripcion-empresa">${ev.nombre}</div>
-          <div class="inscripcion-meta">${ev.fecha ? ev.fecha + ' · ' : ''}${ev.tareas.length} tarea${ev.tareas.length !== 1 ? 's' : ''} asignada${ev.tareas.length !== 1 ? 's' : ''}</div>
+          <div class="inscripcion-meta">${ev.tareas.length} tarea${ev.tareas.length !== 1 ? 's' : ''} asignada${ev.tareas.length !== 1 ? 's' : ''}</div>
         </div>
         <button class="btn-secundario" style="font-size:12px; padding:6px 12px" onclick="abrirEvento('${evId}'); cambiarTab('eventos')">+ Agregar tareas</button>
       </div>
       <div style="font-size:12px; font-weight:500; color:var(--texto-suave); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Mis tareas</div>
-      ${ev.tareas.map(t => `<div class="inscripcion-tarea"><span class="check-verde">✓</span> ${t}</div>`).join('')}
+      ${ev.tareas.length > 0
+        ? ev.tareas.map(t => `<div class="inscripcion-tarea"><span class="check-verde">✓</span> ${t}</div>`).join('')
+        : '<div class="inscripcion-tarea" style="color:var(--texto-suave)">Sin tareas específicas asignadas</div>'
+      }
     </div>`).join('');
 
   // Refrescar grid de eventos también
