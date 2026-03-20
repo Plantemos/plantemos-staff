@@ -312,7 +312,7 @@ body {
 </head>
 <body>
 
-<!-- ══════════════ LOGIN ══════════════ -->
+<!-- ══════════════ LOGIN — PASO 1: EMAIL ══════════════ -->
 <div id="p-login">
   <div class="login-wrap">
     <div class="login-card">
@@ -322,8 +322,25 @@ body {
       <label class="login-label">Correo institucional</label>
       <input class="login-input" type="email" id="input-email" placeholder="tu@plantemos.org" />
       <div class="login-error hidden" id="login-error">Solo cuentas @plantemos.org tienen acceso.</div>
-      <button class="btn-primario" style="width:100%" onclick="login()">Ingresar</button>
+      <button class="btn-primario" style="width:100%" id="btn-enviar-codigo" onclick="enviarCodigo()">Ingresar</button>
       <div class="login-nota">Acceso exclusivo para equipo Plantemos</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ LOGIN — PASO 2: PASSPHRASE ══════════════ -->
+<div id="p-codigo" class="hidden">
+  <div class="login-wrap">
+    <div class="login-card">
+      <img class="login-logo" src="https://plantemos.org/wp-content/uploads/2026/03/plantemos_logotipo_principal_transparente-2022-04-25-17_21_33.png" alt="Plantemos" onerror="this.style.display='none';" />
+      <div class="login-tagline" style="margin-bottom:12px;">Revisa tu correo<br>e ingresa tu código de acceso</div>
+      <div id="codigo-email-hint" style="font-size:12px; color:var(--verde); margin-bottom:20px; font-weight:500;"></div>
+      <label class="login-label">Código de acceso</label>
+      <input class="login-input" type="text" id="input-codigo" placeholder="MatilisguatePetenCeiba" autocomplete="off" />
+      <div class="login-error hidden" id="codigo-error"></div>
+      <button class="btn-primario" style="width:100%; margin-bottom:10px;" id="btn-validar-codigo" onclick="validarCodigo()">Confirmar →</button>
+      <button class="btn-secundario" style="width:100%; font-size:13px;" onclick="volverLoginEmail()">← Cambiar correo</button>
+      <div class="login-nota" style="margin-top:14px;">El código expira en 10 minutos</div>
     </div>
   </div>
 </div>
@@ -450,7 +467,9 @@ const FLOWS = {
   GET_TAREAS:        'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2cbb1e46543b433ca1a6db07d37dd5a0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=gwWrMLmFWqFWStYPqletQWJ7ljB_w1NK-FND7J7tpD0',
   POST_INSCRIBIR:    'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/122f2cd8cc0841c6929168b2b89b7e33/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=fMm9TnT9fRMawxiaZj3k_EkFGpcOFCto6-ZGrTShdbY',
   GET_INSCRIPCIONES: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/7d260ce40ac7421d97e86ad97597b28f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=DDXtwdh0iMZDhEvTpM-BKaqPaWRDZepCrQ2a5Onj7nU',
-  GET_MIS_TAREAS:    'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/cd2ac4ad90cb450d82ef33100b7ecc0c/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JfyGv4poRSHTBVViq3_K1eULs9K_obK1GTTv8t_ORNQ'
+  GET_MIS_TAREAS:    'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/cd2ac4ad90cb450d82ef33100b7ecc0c/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JfyGv4poRSHTBVViq3_K1eULs9K_obK1GTTv8t_ORNQ',
+  POST_ENVIAR_CODIGO:  'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e5766255284e4126a68988493f3088f8/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=jQztWFrtyGMR6qvcuvZHEZAJ49ClRFYiOoJmKxDQiAg',
+  POST_VALIDAR_CODIGO: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/9313214f3a7143b7809ac0b82763a6a8/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=IxhJ-PsZDKCZjeUGEvCvoM4QnYav_K35JqTWD8Fz6_M'
 };
 
 const ADMIN_EMAIL = 'jcm@plantemos.org';
@@ -460,6 +479,7 @@ const ADMIN_EMAIL = 'jcm@plantemos.org';
 // ══════════════════════════════════════════
 let S = {
   usuario: null,
+  emailPendiente: null,
   esAdmin: false,
   eventos: [],           // lista agrupada de eventos
   tareasEvento: [],      // tareas del evento actual
@@ -474,7 +494,7 @@ let S = {
 // PANTALLAS
 // ══════════════════════════════════════════
 function mostrar(id) {
-  ['p-login','p-main','p-confirmar','p-exito'].forEach(p => {
+  ['p-login','p-codigo','p-main','p-confirmar','p-exito'].forEach(p => {
     document.getElementById(p).classList.toggle('hidden', p !== id);
   });
 }
@@ -484,13 +504,72 @@ function irMain() { mostrar('p-main'); }
 // ══════════════════════════════════════════
 // LOGIN / LOGOUT
 // ══════════════════════════════════════════
-function login() {
+async function enviarCodigo() {
   const email = document.getElementById('input-email').value.trim().toLowerCase();
   const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('btn-enviar-codigo');
+
   if (!email.endsWith('@plantemos.org')) {
     errEl.classList.remove('hidden'); return;
   }
   errEl.classList.add('hidden');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Enviando...';
+
+  try {
+    await callFlow(FLOWS.POST_ENVIAR_CODIGO, { email });
+    S.emailPendiente = email;
+    document.getElementById('codigo-email-hint').textContent = `Código enviado a ${email}`;
+    document.getElementById('input-codigo').value = '';
+    document.getElementById('codigo-error').classList.add('hidden');
+    mostrar('p-codigo');
+    document.getElementById('input-codigo').focus();
+  } catch(e) {
+    errEl.textContent = 'Error al enviar el código. Intenta de nuevo.';
+    errEl.classList.remove('hidden');
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Ingresar';
+  }
+}
+
+async function validarCodigo() {
+  const codigo = document.getElementById('input-codigo').value.trim();
+  const errEl = document.getElementById('codigo-error');
+  const btn = document.getElementById('btn-validar-codigo');
+
+  if (!codigo) {
+    errEl.textContent = 'Ingresa el código de acceso.';
+    errEl.classList.remove('hidden'); return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Verificando...';
+
+  try {
+    const res = await callFlow(FLOWS.POST_VALIDAR_CODIGO, { email: S.emailPendiente, codigo });
+    if (res.resultado === 'ok') {
+      completarLogin(S.emailPendiente);
+    } else if (res.resultado === 'expirado') {
+      errEl.textContent = 'El código expiró. Vuelve al paso anterior y solicita uno nuevo.';
+      errEl.classList.remove('hidden');
+    } else {
+      errEl.textContent = 'Código incorrecto. Verifica e intenta de nuevo.';
+      errEl.classList.remove('hidden');
+    }
+  } catch(e) {
+    errEl.textContent = 'Error al verificar. Intenta de nuevo.';
+    errEl.classList.remove('hidden');
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Confirmar →';
+  }
+}
+
+function completarLogin(email) {
   S.usuario = email;
   S.esAdmin = email === ADMIN_EMAIL;
   document.getElementById('nav-email-txt').textContent = email;
@@ -504,10 +583,18 @@ function login() {
   cargarEventos();
 }
 
-document.getElementById('input-email').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+function volverLoginEmail() {
+  mostrar('p-login');
+}
+
+document.getElementById('input-email').addEventListener('keydown', e => { if (e.key === 'Enter') enviarCodigo(); });
+document.addEventListener('DOMContentLoaded', () => {
+  const inputCodigo = document.getElementById('input-codigo');
+  if (inputCodigo) inputCodigo.addEventListener('keydown', e => { if (e.key === 'Enter') validarCodigo(); });
+});
 
 function logout() {
-  S = { usuario:null, esAdmin:false, eventos:[], tareasEvento:[], eventoActual:null, tareasSeleccionadas:[], misInscripciones:[], todasInscripciones:[], adminStabActivo:'eventos' };
+  S = { usuario:null, emailPendiente:null, esAdmin:false, eventos:[], tareasEvento:[], eventoActual:null, tareasSeleccionadas:[], misInscripciones:[], todasInscripciones:[], adminStabActivo:'eventos' };
   document.getElementById('input-email').value = '';
   document.getElementById('nav-badge-admin').classList.add('hidden');
   document.getElementById('tab-btn-admin').classList.add('hidden');
