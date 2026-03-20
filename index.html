@@ -689,14 +689,16 @@ function extraerNombreTarea(title) {
 
 function parsearTareasAceptadas(tareasStr) {
   if (!tareasStr) return [];
-  try {
-    const parsed = JSON.parse(tareasStr);
-    if (Array.isArray(parsed)) return parsed.map(t => t.nombreTarea || String(t));
-    if (parsed.nombreTarea) return [parsed.nombreTarea];
-    return [String(tareasStr)];
-  } catch(e) {
-    return tareasStr.split(',').map(t => t.trim()).filter(Boolean);
+  const nombres = [];
+  // Extraer todos los nombreTarea con regex — maneja cualquier formato de concatenación
+  const regex = /"nombreTarea"\s*:\s*"([^"]+)"/g;
+  let match;
+  while ((match = regex.exec(tareasStr)) !== null) {
+    if (!nombres.includes(match[1])) nombres.push(match[1]);
   }
+  if (nombres.length > 0) return nombres;
+  // Fallback: texto plano separado por comas
+  return tareasStr.split(',').map(t => t.trim()).filter(t => t && !t.startsWith('{') && !t.startsWith('['));
 }
 function toggleTarea(idx) {
   const pos = S.tareasSeleccionadas.indexOf(idx);
