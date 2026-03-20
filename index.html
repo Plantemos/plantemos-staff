@@ -618,14 +618,16 @@ function cambiarTab(tab) {
 // ══════════════════════════════════════════
 async function callFlow(url, body = null) {
   const opts = {
-    method: body ? 'POST' : 'POST',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body || {})
   };
   const res = await fetch(url, opts);
-  if (!res.ok) throw new Error(`Error ${res.status}`);
   const text = await res.text();
-  return text ? JSON.parse(text) : {};
+  const data = text ? JSON.parse(text) : {};
+  // Permitir 401 con resultado conocido (invalido/expirado) — son respuestas válidas del flow
+  if (!res.ok && !data.resultado) throw new Error(`Error ${res.status}`);
+  return data;
 }
 
 // ══════════════════════════════════════════
