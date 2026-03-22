@@ -855,13 +855,24 @@ async function confirmarInscripcion() {
     nombreTarea: extraerNombreTarea(S.tareasEvento[i].Title)
   }));
 
+  // Tareas previas ya inscritas en este evento
+  const inscripcionPrevia = S.misInscripciones.find(i => String(i.EventoId) === String(ev.id));
+  const tareasPrevias = inscripcionPrevia ? parsearTareasAceptadas(inscripcionPrevia.TareasAceptadas) : [];
+
+  // Listado completo: previas + nuevas (sin duplicados)
+  const nombresNuevos = tareasSeleccionadasData.map(t => t.nombreTarea);
+  const todasLasTareas = [
+    ...tareasPrevias.filter(t => !nombresNuevos.includes(t)),
+    ...nombresNuevos
+  ];
+
   const payload = {
     nombreStaff: nombreCompleto,
     emailStaff: S.usuario,
     eventoId: String(ev.id),
     nombreEvento: ev.empresa,
     fechaEvento: ev.fecha || 'Por confirmar',
-    taresTexto: tareasSeleccionadasData.map(t => `· ${t.nombreTarea}`).join('<br>'),
+    taresTexto: todasLasTareas.map(t => `· ${t}`).join('<br>'),
     tareasSeleccionadas: tareasSeleccionadasData
   };
 
