@@ -850,15 +850,19 @@ async function confirmarInscripcion() {
   const ev = S.eventoActual;
   const nombreCompleto = S.usuario.split('@')[0].replace('.', ' ');
 
+  const tareasSeleccionadasData = S.tareasSeleccionadas.map(i => ({
+    tareaId: parseInt(S.tareasEvento[i].ID) || i,
+    nombreTarea: extraerNombreTarea(S.tareasEvento[i].Title)
+  }));
+
   const payload = {
     nombreStaff: nombreCompleto,
     emailStaff: S.usuario,
     eventoId: String(ev.id),
     nombreEvento: ev.empresa,
-    tareasSeleccionadas: S.tareasSeleccionadas.map(i => ({
-      tareaId: parseInt(S.tareasEvento[i].ID) || i,
-      nombreTarea: extraerNombreTarea(S.tareasEvento[i].Title)
-    }))
+    fechaEvento: ev.fecha || 'Por confirmar',
+    taresTexto: tareasSeleccionadasData.map(t => `· ${t.nombreTarea}`).join('<br>'),
+    tareasSeleccionadas: tareasSeleccionadasData
   };
 
   try {
