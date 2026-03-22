@@ -272,6 +272,15 @@ body {
 .sin-asignar { color: var(--rojo); font-style: italic; }
 .con-asignado { color: var(--verde); }
 
+/* ── LOG DE ACTIVIDAD ── */
+.log-badge {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.3px;
+  padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+}
+.log-login { background: #f0f4ff; color: #3a5aad; border: 0.5px solid #c5d0f0; }
+.log-inscripcion { background: var(--verde-bg); color: var(--verde-oscuro); border: 0.5px solid var(--verde-borde); }
+.log-retiro { background: #fff3f3; color: var(--rojo); border: 0.5px solid #f5c0c0; }
+
 /* ── LOGIN ── */
 .login-wrap {
   min-height: 100vh; display: flex; align-items: center;
@@ -410,6 +419,7 @@ body {
       <button class="admin-stab activo" onclick="adminStab('eventos')">Todos los eventos</button>
       <button class="admin-stab" onclick="adminStab('personas')">Por persona</button>
       <button class="admin-stab" onclick="adminStab('vacias')">Sin responsable</button>
+      <button class="admin-stab" onclick="adminStab('log')">Log de actividad</button>
     </div>
     <div id="admin-contenido"></div>
   </div>
@@ -469,7 +479,9 @@ const FLOWS = {
   GET_INSCRIPCIONES: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/7d260ce40ac7421d97e86ad97597b28f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=DDXtwdh0iMZDhEvTpM-BKaqPaWRDZepCrQ2a5Onj7nU',
   GET_MIS_TAREAS:    'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/cd2ac4ad90cb450d82ef33100b7ecc0c/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JfyGv4poRSHTBVViq3_K1eULs9K_obK1GTTv8t_ORNQ',
   POST_ENVIAR_CODIGO:  'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e5766255284e4126a68988493f3088f8/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=jQztWFrtyGMR6qvcuvZHEZAJ49ClRFYiOoJmKxDQiAg',
-  POST_VALIDAR_CODIGO: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/9313214f3a7143b7809ac0b82763a6a8/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=IxhJ-PsZDKCZjeUGEvCvoM4QnYav_K35JqTWD8Fz6_M'
+  POST_VALIDAR_CODIGO: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/9313214f3a7143b7809ac0b82763a6a8/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=IxhJ-PsZDKCZjeUGEvCvoM4QnYav_K35JqTWD8Fz6_M',
+  POST_REGISTRAR_LOG: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e19022bc3e5b4b2aaac7bb13b0462528/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=UsuNnX759BYaGhKlo0xP6hjBd6hGc6PtQdjzjOkctk0',
+  GET_LOG: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5953c8201e2e49a0a9f7405038ec7b2f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=e7hE7dBMTA4aawHe_UcBOkSN4FjViwGr4WWh6MYznwY'
 };
 
 const ADMIN_EMAIL = 'jcm@plantemos.org';
@@ -569,6 +581,18 @@ async function validarCodigo() {
   }
 }
 
+// ══════════════════════════════════════════
+// LOG DE AUDITORÍA
+// ══════════════════════════════════════════
+function registrarLog(accion, nombreEvento) {
+  // Fire-and-forget: no bloquea el flujo principal
+  callFlow(FLOWS.POST_REGISTRAR_LOG, {
+    accion,
+    emailStaff: S.usuario || S.emailPendiente || '',
+    nombreEvento: nombreEvento || ''
+  }).catch(e => console.warn('Log no registrado:', e));
+}
+
 function completarLogin(email) {
   S.usuario = email;
   S.esAdmin = email === ADMIN_EMAIL;
@@ -578,6 +602,7 @@ function completarLogin(email) {
     document.getElementById('nav-badge-admin').classList.remove('hidden');
     document.getElementById('tab-btn-admin').classList.remove('hidden');
   }
+  registrarLog('Login exitoso', '');
   mostrar('p-main');
   cambiarTab('eventos');
   cargarEventos();
@@ -839,6 +864,7 @@ async function confirmarInscripcion() {
   try {
     console.log('Payload enviado a InscribirStaff:', JSON.stringify(payload, null, 2));
     await callFlow(FLOWS.POST_INSCRIBIR, payload);
+    registrarLog('Inscripción a evento/tarea', ev.empresa);
     document.getElementById('exito-msg').textContent =
       `Te inscribiste a "${ev.empresa}" con ${S.tareasSeleccionadas.length} tarea(s) asignada(s). Recibirás una confirmación por correo.`;
     // Refrescar inscripciones localmente
@@ -926,9 +952,39 @@ async function cargarTodasInscripciones() {
 function adminStab(stab) {
   S.adminStabActivo = stab;
   document.querySelectorAll('.admin-stab').forEach((el, i) => {
-    el.classList.toggle('activo', ['eventos','personas','vacias'][i] === stab);
+    el.classList.toggle('activo', ['eventos','personas','vacias','log'][i] === stab);
   });
-  renderAdmin();
+  if (stab === 'log') cargarLog();
+  else renderAdmin();
+}
+
+async function cargarLog() {
+  const cont = document.getElementById('admin-contenido');
+  cont.innerHTML = '<p class="estado-msg"><span class="spinner"></span> Cargando actividad...</p>';
+  try {
+    const data = await callFlow(FLOWS.GET_LOG);
+    const items = (data.value || []).sort((a, b) => b.FechaHora?.localeCompare(a.FechaHora));
+    if (items.length === 0) {
+      cont.innerHTML = '<p class="estado-msg">No hay actividad registrada aún.</p>';
+      return;
+    }
+    cont.innerHTML = `<table class="tabla-admin">
+      <thead><tr><th>Fecha y hora</th><th>Staff</th><th>Acción</th><th>Evento</th></tr></thead>
+      <tbody>${items.map(item => {
+        const fecha = item.FechaHora ? new Date(item.FechaHora).toLocaleString('es-GT', { dateStyle:'short', timeStyle:'short' }) : '—';
+        const accion = item.Accion || '—';
+        const badge = accion === 'Login exitoso' ? 'login' : accion.startsWith('Inscripción') ? 'inscripcion' : 'retiro';
+        return `<tr>
+          <td style="color:var(--texto-suave); font-size:12px;">${fecha}</td>
+          <td style="font-weight:500;">${item.EmailStaff || '—'}</td>
+          <td><span class="log-badge log-${badge}">${accion}</span></td>
+          <td style="font-size:12px; color:var(--texto-suave);">${item.NombreEvento || '—'}</td>
+        </tr>`;
+      }).join('')}</tbody></table>`;
+  } catch(e) {
+    cont.innerHTML = '<p class="estado-msg estado-error">Error al cargar el log. Intenta de nuevo.</p>';
+    console.error(e);
+  }
 }
 
 function renderAdmin() {
