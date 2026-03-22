@@ -972,7 +972,7 @@ async function cargarLog() {
       <thead><tr><th>Fecha y hora</th><th>Staff</th><th>Acción</th><th>Evento</th></tr></thead>
       <tbody>${items.map(item => {
         const fecha = item.FechaHora ? new Date(item.FechaHora).toLocaleString('es-GT', { dateStyle:'short', timeStyle:'short' }) : '—';
-        const accion = item.Accion || '—';
+        const accion = item.Title || item.Accion || '—';
         const badge = accion === 'Login exitoso' ? 'login' : accion.startsWith('Inscripción') ? 'inscripcion' : 'retiro';
         return `<tr>
           <td style="color:var(--texto-suave); font-size:12px;">${fecha}</td>
