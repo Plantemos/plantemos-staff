@@ -829,47 +829,33 @@ function extraerNombreTarea(title) {
 
 function parsearTareasAceptadas(tareasStr, conId = false) {
   if (!tareasStr) return [];
+
+  // Parsear objetos individualmente — maneja tareaId como número o string
+  const objetos = [];
+  const regexObj = /\{[^}]+\}/g;
+  let obj;
+  while ((obj = regexObj.exec(tareasStr)) !== null) {
+    try {
+      // Normalizar tareaId numérico a string para JSON.parse
+      const normalizado = obj[0].replace(/"tareaId"\s*:\s*(\d+)/, '"tareaId":"$1"');
+      const parsed = JSON.parse(normalizado);
+      if (parsed.tareaId && String(parsed.tareaId).startsWith('ELIMINADO_')) continue;
+      if (parsed.nombreTarea) objetos.push({ nombre: parsed.nombreTarea, tareaId: String(parsed.tareaId || '') });
+    } catch(e) { /* ignorar objetos malformados */ }
+  }
+
   if (conId) {
-    const items = [];
-    const regex = /\{[^}]*"tareaId"\s*:\s*"?(\d+)"?[^}]*"nombreTarea"\s*:\s*"([^"]+)"[^}]*\}|\{[^}]*"nombreTarea"\s*:\s*"([^"]+)"[^}]*"tareaId"\s*:\s*"?(\d+)"?[^}]*\}/g;
-    let match;
-    while ((match = regex.exec(tareasStr)) !== null) {
-      const tareaId = match[1] || match[4];
-      const nombre = match[2] || match[3];
-      // Filtrar tareas marcadas como eliminadas
-      if (nombre && tareaId && tareaId.startsWith('ELIMINADO_')) continue;
-      if (nombre && !items.find(i => i.nombre === nombre)) {
-        items.push({ nombre, tareaId: tareaId || '' });
-      }
-    }
-    if (items.length > 0) return items;
-    const nombresArr = [];
-    const r2 = /"nombreTarea"\s*:\s*"([^"]+)"/g;
-    let m2;
-    while ((m2 = r2.exec(tareasStr)) !== null) {
-      if (!nombresArr.find(i => i.nombre === m2[1])) nombresArr.push({ nombre: m2[1], tareaId: '' });
-    }
-    return nombresArr;
+    // Deduplicar por nombre
+    const vistos = new Set();
+    return objetos.filter(i => { if (vistos.has(i.nombre)) return false; vistos.add(i.nombre); return true; });
   }
-  // Modo original — devuelve array de strings, filtrando eliminadas
+
+  // Modo string — devuelve solo nombres
   const nombres = [];
-  const regex = /"tareaId"\s*:\s*"?([^",}]+)"?[^}]*"nombreTarea"\s*:\s*"([^"]+)"|"nombreTarea"\s*:\s*"([^"]+)"[^}]*"tareaId"\s*:\s*"?([^",}]+)"?/g;
-  let match;
-  while ((match = regex.exec(tareasStr)) !== null) {
-    const tareaId = match[1] || match[4] || '';
-    const nombre = match[2] || match[3];
-    if (tareaId.startsWith('ELIMINADO_')) continue;
-    if (nombre && !nombres.includes(nombre)) nombres.push(nombre);
-  }
+  objetos.forEach(i => { if (!nombres.includes(i.nombre)) nombres.push(i.nombre); });
   if (nombres.length > 0) return nombres;
-  // Fallback simple
-  const r2 = /"nombreTarea"\s*:\s*"([^"]+)"/g;
-  let m2;
-  const fallback = [];
-  while ((m2 = r2.exec(tareasStr)) !== null) {
-    if (!fallback.includes(m2[1])) fallback.push(m2[1]);
-  }
-  if (fallback.length > 0) return fallback;
+
+  // Fallback texto plano
   return tareasStr.split(',').map(t => t.trim()).filter(t => t && !t.startsWith('{') && !t.startsWith('['));
 }
 function toggleTarea(idx) {
