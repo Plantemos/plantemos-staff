@@ -481,7 +481,8 @@ const FLOWS = {
   POST_ENVIAR_CODIGO:  'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e5766255284e4126a68988493f3088f8/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=jQztWFrtyGMR6qvcuvZHEZAJ49ClRFYiOoJmKxDQiAg',
   POST_VALIDAR_CODIGO: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/9313214f3a7143b7809ac0b82763a6a8/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=IxhJ-PsZDKCZjeUGEvCvoM4QnYav_K35JqTWD8Fz6_M',
   POST_REGISTRAR_LOG: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e19022bc3e5b4b2aaac7bb13b0462528/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=UsuNnX759BYaGhKlo0xP6hjBd6hGc6PtQdjzjOkctk0',
-  GET_LOG: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5953c8201e2e49a0a9f7405038ec7b2f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=e7hE7dBMTA4aawHe_UcBOkSN4FjViwGr4WWh6MYznwY'
+  GET_LOG: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5953c8201e2e49a0a9f7405038ec7b2f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=e7hE7dBMTA4aawHe_UcBOkSN4FjViwGr4WWh6MYznwY',
+  GET_TODAS_INSCRIPCIONES: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4d0f4535537b4c98bcd439092d350539/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=gTYTDgvTSQFt9Z1cqSDim4YwTNHabwQhYbxqSuU3USU'
 };
 
 const ADMIN_EMAIL = 'jcm@plantemos.org';
@@ -959,8 +960,15 @@ function irMisInscripciones() { mostrar('p-main'); cambiarTab('mis'); }
 // ADMIN
 // ══════════════════════════════════════════
 async function cargarTodasInscripciones() {
-  // Para admin necesitamos todas las inscripciones — por ahora usamos las del usuario
-  // En una versión futura se agregaría un flow GET_AllInscripciones para JCM
+  const cont = document.getElementById('admin-contenido');
+  cont.innerHTML = '<p class="estado-msg"><span class="spinner"></span> Cargando inscripciones...</p>';
+  try {
+    const data = await callFlow(FLOWS.GET_TODAS_INSCRIPCIONES);
+    S.todasInscripciones = data.value || [];
+  } catch(e) {
+    console.error('Error cargando todas las inscripciones:', e);
+    S.todasInscripciones = [];
+  }
   renderAdmin();
 }
 
@@ -1015,14 +1023,24 @@ function renderAdmin() {
         <td class="${ev.totalInscritos > 0 ? 'con-asignado' : ''}">${ev.totalInscritos}</td>
       </tr>`).join('')}</tbody></table>`;
   } else if (S.adminStabActivo === 'personas') {
-    if (S.misInscripciones.length === 0) { cont.innerHTML = '<p class="estado-msg">No hay inscripciones registradas.</p>'; return; }
+    if (S.todasInscripciones.length === 0) { cont.innerHTML = '<p class="estado-msg">No hay inscripciones registradas.</p>'; return; }
+    // Agrupar por email — un card por persona
+    const porPersona = {};
+    S.todasInscripciones.forEach(item => {
+      const email = item.EmailStaff || item.Title || '—';
+      if (!porPersona[email]) porPersona[email] = [];
+      const tareas = parsearTareasAceptadas(item.TareasAceptadas);
+      porPersona[email].push({ evento: item.NombreEvento, tareas });
+    });
     cont.innerHTML = `<table class="tabla-admin">
-      <thead><tr><th>Staff</th><th>Evento</th><th>Tarea</th></tr></thead>
-      <tbody>${S.misInscripciones.map(i => `<tr>
-        <td style="font-weight:500">${i.Title?.split('@')[0] || i.EmailStaff}</td>
-        <td>${i.NombreEvento}</td>
-        <td style="font-size:12px; color:var(--texto-suave)">${extraerNombreTarea(i.Title)}</td>
-      </tr>`).join('')}</tbody></table>`;
+      <thead><tr><th>Staff</th><th>Evento</th><th>Tareas asignadas</th></tr></thead>
+      <tbody>${Object.entries(porPersona).map(([email, inscripciones]) =>
+        inscripciones.map((ins, idx) => `<tr>
+          ${idx === 0 ? `<td style="font-weight:500;vertical-align:top;" rowspan="${inscripciones.length}">${email}</td>` : ''}
+          <td>${ins.evento || '—'}</td>
+          <td style="font-size:12px;color:var(--texto-suave);">${ins.tareas.length > 0 ? ins.tareas.join('<br>') : 'Sin tareas'}</td>
+        </tr>`).join('')
+      ).join('')}</tbody></table>`;
   } else {
     if (S.tareasEvento.length === 0) {
       cont.innerHTML = '<p class="estado-msg">Selecciona un evento primero para ver tareas sin responsable.</p>'; return;
