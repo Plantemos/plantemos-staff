@@ -252,6 +252,22 @@ body {
 }
 .inscripcion-tarea:last-child { border-bottom: none; }
 .check-verde { color: var(--verde); font-size: 12px; }
+.btn-quitar-tarea {
+  margin-left: auto; flex-shrink: 0;
+  background: none; border: 0.5px solid var(--borde);
+  border-radius: 20px; padding: 2px 10px; font-size: 11px;
+  color: var(--texto-suave); cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.btn-quitar-tarea:hover { background: #fff3f3; border-color: var(--rojo); color: var(--rojo); }
+.btn-retiro-evento {
+  margin-top: 12px; width: 100%;
+  background: none; border: 0.5px solid var(--borde);
+  border-radius: var(--radio-md); padding: 8px 16px; font-size: 13px;
+  color: var(--texto-suave); cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s; text-align: center;
+}
+.btn-retiro-evento:hover { background: #fff3f3; border-color: var(--rojo); color: var(--rojo); }
 
 /* ── ADMIN ── */
 .admin-subtabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -482,7 +498,8 @@ const FLOWS = {
   POST_VALIDAR_CODIGO: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/9313214f3a7143b7809ac0b82763a6a8/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=IxhJ-PsZDKCZjeUGEvCvoM4QnYav_K35JqTWD8Fz6_M',
   POST_REGISTRAR_LOG: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e19022bc3e5b4b2aaac7bb13b0462528/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=UsuNnX759BYaGhKlo0xP6hjBd6hGc6PtQdjzjOkctk0',
   GET_LOG: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5953c8201e2e49a0a9f7405038ec7b2f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=e7hE7dBMTA4aawHe_UcBOkSN4FjViwGr4WWh6MYznwY',
-  GET_TODAS_INSCRIPCIONES: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4d0f4535537b4c98bcd439092d350539/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=gTYTDgvTSQFt9Z1cqSDim4YwTNHabwQhYbxqSuU3USU'
+  GET_TODAS_INSCRIPCIONES: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4d0f4535537b4c98bcd439092d350539/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=gTYTDgvTSQFt9Z1cqSDim4YwTNHabwQhYbxqSuU3USU',
+  POST_DESINSCRIBIR: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/464107a6d7da4d36934de6a64444465d/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=1L2GT3GT1LCxRNny8ujCdIE1VTPaIOaaxgHBn92c81o'
 };
 
 const ADMIN_EMAIL = 'jcm@plantemos.org';
@@ -790,7 +807,10 @@ async function abrirEvento(eventoId) {
         onclick="${yaInscrito ? '' : `toggleTarea(${idx})`}">
         <div class="tarea-check">✓</div>
         <span class="tarea-nombre">${nombreTarea}${yaInscrito ? ' <span style="font-size:11px;color:var(--verde);font-weight:500;">· Ya inscrito</span>' : ''}</span>
-        <span class="tarea-chip${inscritos > 0 ? ' verde' : ''}">${inscritos} persona${inscritos !== 1 ? 's' : ''}</span>
+        ${yaInscrito
+          ? `<button class="btn-quitar-tarea" onclick="event.stopPropagation(); desinscribir('${S.eventoActual.id}', '${S.eventoActual.empresa}', '${t.ID}')">Quitar</button>`
+          : `<span class="tarea-chip${inscritos > 0 ? ' verde' : ''}">${inscritos} persona${inscritos !== 1 ? 's' : ''}</span>`
+        }
       </div>`;
     }).join('');
   } catch(e) {
@@ -807,17 +827,38 @@ function extraerNombreTarea(title) {
 }
 
 
-function parsearTareasAceptadas(tareasStr) {
+function parsearTareasAceptadas(tareasStr, conId = false) {
   if (!tareasStr) return [];
+  if (conId) {
+    // Devuelve array de {nombre, tareaId}
+    const items = [];
+    const regex = /\{[^}]*"tareaId"\s*:\s*"?(\d+)"?[^}]*"nombreTarea"\s*:\s*"([^"]+)"[^}]*\}|\{[^}]*"nombreTarea"\s*:\s*"([^"]+)"[^}]*"tareaId"\s*:\s*"?(\d+)"?[^}]*\}/g;
+    let match;
+    while ((match = regex.exec(tareasStr)) !== null) {
+      const tareaId = match[1] || match[4];
+      const nombre = match[2] || match[3];
+      if (nombre && !items.find(i => i.nombre === nombre)) {
+        items.push({ nombre, tareaId: tareaId || '' });
+      }
+    }
+    if (items.length > 0) return items;
+    // Fallback sin ID
+    const nombres = [];
+    const r2 = /"nombreTarea"\s*:\s*"([^"]+)"/g;
+    let m2;
+    while ((m2 = r2.exec(tareasStr)) !== null) {
+      if (!nombres.find(i => i.nombre === m2[1])) nombres.push({ nombre: m2[1], tareaId: '' });
+    }
+    return nombres;
+  }
+  // Modo original — devuelve array de strings
   const nombres = [];
-  // Extraer todos los nombreTarea con regex — maneja cualquier formato de concatenación
   const regex = /"nombreTarea"\s*:\s*"([^"]+)"/g;
   let match;
   while ((match = regex.exec(tareasStr)) !== null) {
     if (!nombres.includes(match[1])) nombres.push(match[1]);
   }
   if (nombres.length > 0) return nombres;
-  // Fallback: texto plano separado por comas
   return tareasStr.split(',').map(t => t.trim()).filter(t => t && !t.startsWith('{') && !t.startsWith('['));
 }
 function toggleTarea(idx) {
@@ -934,7 +975,7 @@ async function cargarMisInscripciones() {
       porEvento[evId] = {
         nombre: item.NombreEvento,
         fecha: '',
-        tareas: parsearTareasAceptadas(item.TareasAceptadas)
+        tareas: parsearTareasAceptadas(item.TareasAceptadas, true)
       };
     }
   });
@@ -950,13 +991,41 @@ async function cargarMisInscripciones() {
       </div>
       <div style="font-size:12px; font-weight:500; color:var(--texto-suave); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Mis tareas</div>
       ${ev.tareas.length > 0
-        ? ev.tareas.map(t => `<div class="inscripcion-tarea"><span class="check-verde">✓</span> ${t}</div>`).join('')
+        ? ev.tareas.map(t => `
+          <div class="inscripcion-tarea">
+            <span class="check-verde">✓</span>
+            <span style="flex:1;">${t.nombre}</span>
+            <button class="btn-quitar-tarea" onclick="desinscribir('${evId}', '${ev.nombre}', '${t.tareaId}')">Quitar</button>
+          </div>`).join('')
         : '<div class="inscripcion-tarea" style="color:var(--texto-suave)">Sin tareas específicas asignadas</div>'
       }
+      <button class="btn-retiro-evento" onclick="desinscribir('${evId}', '${ev.nombre}')">Retirarme del evento completo</button>
     </div>`).join('');
 
   // Refrescar grid de eventos también
   document.getElementById('eventos-grid').innerHTML = S.eventos.map(ev => renderCardEvento(ev)).join('');
+}
+
+// ══════════════════════════════════════════
+// DESINSCRIPCIÓN
+// ══════════════════════════════════════════
+async function desinscribir(eventoId, nombreEvento, tareaId = '') {
+  const esTotalStr = tareaId ? `la tarea seleccionada` : `el evento "${nombreEvento}"`;
+  if (!confirm(`¿Confirmas que quieres retirarte de ${esTotalStr}?`)) return;
+
+  try {
+    await callFlow(FLOWS.POST_DESINSCRIBIR, {
+      emailStaff: S.usuario,
+      eventoId: String(eventoId),
+      tareaId: tareaId ? String(tareaId) : ''
+    });
+    registrarLog('Retiro de inscripción', nombreEvento);
+    await cargarMisInscripcionesData();
+    cargarMisInscripciones();
+  } catch(e) {
+    alert('Hubo un error al procesar el retiro. Intenta de nuevo.');
+    console.error(e);
+  }
 }
 
 function irMisInscripciones() { mostrar('p-main'); cambiarTab('mis'); }
