@@ -775,17 +775,22 @@ async function abrirEvento(eventoId) {
       return;
     }
 
-    const tareasYaInscritas = S.misInscripciones
+    const tareasYaInscritas = new Set();
+    S.misInscripciones
       .filter(i => String(i.EventoId) === String(eventoId))
-      .map(i => i.Title);
+      .forEach(i => {
+        parsearTareasAceptadas(i.TareasAceptadas).forEach(nombre => tareasYaInscritas.add(nombre));
+      });
 
     listEl.innerHTML = S.tareasEvento.map((t, idx) => {
-      const yaInscrito = tareasYaInscritas.some(ti => ti === t.Title);
+      const nombreTarea = extraerNombreTarea(t.Title);
+      const yaInscrito = tareasYaInscritas.has(nombreTarea);
+      const inscritos = t.CantidadResponsables || 0;
       return `<div class="tarea-item${yaInscrito ? ' ya-inscrito' : ''}" id="titem-${idx}"
         onclick="${yaInscrito ? '' : `toggleTarea(${idx})`}">
         <div class="tarea-check">✓</div>
-        <span class="tarea-nombre">${extraerNombreTarea(t.Title)}</span>
-        <span class="tarea-chip">${yaInscrito ? 'Ya inscrito' : (t.CantidadResponsables || 0) + ' personas'}</span>
+        <span class="tarea-nombre">${nombreTarea}${yaInscrito ? ' <span style="font-size:11px;color:var(--verde);font-weight:500;">· Ya inscrito</span>' : ''}</span>
+        <span class="tarea-chip${inscritos > 0 ? ' verde' : ''}">${inscritos} persona${inscritos !== 1 ? 's' : ''}</span>
       </div>`;
     }).join('');
   } catch(e) {
@@ -1012,22 +1017,42 @@ async function cargarLog() {
 
 function renderAdmin() {
   const cont = document.getElementById('admin-contenido');
+
+  // Construir mapa de tareas con responsable real desde todasInscripciones
+  const tareasConResponsable = new Set();
+  S.todasInscripciones.forEach(item => {
+    parsearTareasAceptadas(item.TareasAceptadas).forEach(nombre => {
+      tareasConResponsable.add(`${item.EventoId}::${nombre}`);
+    });
+  });
+
   if (S.adminStabActivo === 'eventos') {
     if (S.eventos.length === 0) { cont.innerHTML = '<p class="estado-msg">No hay eventos cargados.</p>'; return; }
+    // Contar inscritos reales por evento desde todasInscripciones
+    const inscritosPorEvento = {};
+    S.todasInscripciones.forEach(item => {
+      const evId = String(item.EventoId);
+      if (!inscritosPorEvento[evId]) inscritosPorEvento[evId] = new Set();
+      inscritosPorEvento[evId].add(item.EmailStaff);
+    });
     cont.innerHTML = `<table class="tabla-admin">
-      <thead><tr><th>Empresa</th><th>Fecha</th><th>Lugar</th><th>Tareas totales</th><th>Inscritos</th></tr></thead>
-      <tbody>${S.eventos.map(ev => `<tr>
-        <td style="font-weight:500">${ev.empresa}</td>
-        <td>${ev.fecha}</td><td>${ev.lugar}</td>
-        <td>${ev.totalTareas}</td>
-        <td class="${ev.totalInscritos > 0 ? 'con-asignado' : ''}">${ev.totalInscritos}</td>
-      </tr>`).join('')}</tbody></table>`;
+      <thead><tr><th>Empresa</th><th>Fecha</th><th>Lugar</th><th>Tareas totales</th><th>Personas inscritas</th></tr></thead>
+      <tbody>${S.eventos.map(ev => {
+        const inscritos = inscritosPorEvento[String(ev.id)]?.size || 0;
+        return `<tr>
+          <td style="font-weight:500">${ev.empresa}</td>
+          <td>${ev.fecha || '—'}</td>
+          <td>${ev.lugar || '—'}</td>
+          <td>${ev.totalTareas}</td>
+          <td class="${inscritos > 0 ? 'con-asignado' : ''}">${inscritos}</td>
+        </tr>`;
+      }).join('')}</tbody></table>`;
+
   } else if (S.adminStabActivo === 'personas') {
     if (S.todasInscripciones.length === 0) { cont.innerHTML = '<p class="estado-msg">No hay inscripciones registradas.</p>'; return; }
-    // Agrupar por email — un card por persona
     const porPersona = {};
     S.todasInscripciones.forEach(item => {
-      const email = item.EmailStaff || item.Title || '—';
+      const email = item.EmailStaff || '—';
       if (!porPersona[email]) porPersona[email] = [];
       const tareas = parsearTareasAceptadas(item.TareasAceptadas);
       porPersona[email].push({ evento: item.NombreEvento, tareas });
@@ -1037,20 +1062,40 @@ function renderAdmin() {
       <tbody>${Object.entries(porPersona).map(([email, inscripciones]) =>
         inscripciones.map((ins, idx) => `<tr>
           ${idx === 0 ? `<td style="font-weight:500;vertical-align:top;" rowspan="${inscripciones.length}">${email}</td>` : ''}
-          <td>${ins.evento || '—'}</td>
-          <td style="font-size:12px;color:var(--texto-suave);">${ins.tareas.length > 0 ? ins.tareas.join('<br>') : 'Sin tareas'}</td>
+          <td style="vertical-align:top;">${ins.evento || '—'}</td>
+          <td style="font-size:13px;color:var(--texto-suave);">
+            ${ins.tareas.length > 0
+              ? `<ul style="margin:0;padding-left:16px;line-height:1.8;">${ins.tareas.map(t => `<li>${t}</li>`).join('')}</ul>`
+              : '<span style="font-style:italic;">Sin tareas</span>'}
+          </td>
         </tr>`).join('')
       ).join('')}</tbody></table>`;
+
   } else {
-    if (S.tareasEvento.length === 0) {
-      cont.innerHTML = '<p class="estado-msg">Selecciona un evento primero para ver tareas sin responsable.</p>'; return;
+    // Sin responsable — cruzar contra inscripciones reales
+    if (S.eventos.length === 0) {
+      cont.innerHTML = '<p class="estado-msg">No hay eventos cargados.</p>'; return;
     }
-    const vacias = S.tareasEvento.filter(t => !t.CantidadResponsables || t.CantidadResponsables === 0);
-    if (vacias.length === 0) { cont.innerHTML = '<p class="estado-msg" style="color:var(--verde)">Todas las tareas tienen responsable asignado.</p>'; return; }
+    // Usar todas las tareas de todos los eventos cargados
+    const todasTareas = [];
+    S.eventos.forEach(ev => {
+      // Las tareas están en S.tareasEvento solo del evento actual — usamos todasInscripciones para saber cuáles tienen responsable
+    });
+    if (S.tareasEvento.length === 0) {
+      cont.innerHTML = '<p class="estado-msg">Abre un evento primero para ver sus tareas sin responsable.</p>'; return;
+    }
+    const vacias = S.tareasEvento.filter(t => {
+      const nombreTarea = extraerNombreTarea(t.Title);
+      const clave = `${t.EventoId}::${nombreTarea}`;
+      return !tareasConResponsable.has(clave);
+    });
+    if (vacias.length === 0) {
+      cont.innerHTML = '<p class="estado-msg" style="color:var(--verde)">✓ Todas las tareas del evento actual tienen responsable asignado.</p>'; return;
+    }
     cont.innerHTML = `<table class="tabla-admin">
       <thead><tr><th>Evento</th><th>Tarea</th><th>Estado</th></tr></thead>
       <tbody>${vacias.map(t => `<tr>
-        <td>${t.NombreEvento}</td>
+        <td>${t.NombreEvento || '—'}</td>
         <td>${extraerNombreTarea(t.Title)}</td>
         <td><span class="sin-asignar">Sin asignar</span></td>
       </tr>`).join('')}</tbody></table>`;
