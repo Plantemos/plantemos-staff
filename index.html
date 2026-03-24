@@ -971,7 +971,7 @@ async function cargarMisInscripciones() {
     if (!porEvento[evId]) {
       porEvento[evId] = {
         nombre: item.NombreEvento,
-        fecha: '',
+        fecha: item.FechaEvento || '',
         tareas: parsearTareasAceptadas(item.TareasAceptadas, true)
       };
     }
@@ -983,6 +983,7 @@ async function cargarMisInscripciones() {
         <div>
           <div class="inscripcion-empresa">${ev.nombre}</div>
           <div class="inscripcion-meta">${ev.tareas.length} tarea${ev.tareas.length !== 1 ? 's' : ''} asignada${ev.tareas.length !== 1 ? 's' : ''}</div>
+          ${ev.fecha ? `<div class="inscripcion-meta" style="margin-top:4px;">📅 ${ev.fecha}${(() => { const hoy = new Date(); const meses = {enero:0,febrero:1,marzo:2,abril:3,mayo:4,junio:5,julio:6,agosto:7,septiembre:8,octubre:9,noviembre:10,diciembre:11}; const mesMatch = ev.fecha.toLowerCase().match(/enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre/); const diaMatch = ev.fecha.match(/\d+/); if (!mesMatch || !diaMatch) return ''; const mes = meses[mesMatch[0]]; const dia = parseInt(diaMatch[0]); const anio = new Date().getFullYear(); const fechaEvento = new Date(anio, mes, dia); const diff = Math.ceil((fechaEvento - hoy) / (1000*60*60*24)); return diff > 0 ? ` · en ${diff} días` : diff === 0 ? ' · ¡Hoy!' : ' · Ya ocurrió'; })()}</div>` : ''}
         </div>
         <button class="btn-secundario" style="font-size:12px; padding:6px 12px" onclick="abrirEvento('${evId}'); cambiarTab('eventos')">+ Agregar tareas</button>
       </div>
