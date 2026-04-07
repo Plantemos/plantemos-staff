@@ -1481,13 +1481,16 @@ async function cpCargarFechas() {
 
     // Cruzar con cotizaciones para detectar interesados por nombre de fecha
     const interesados = {};
-    const estadosActivos = ['Nuevo','Cotización Lista','Cotización Enviada','En Seguimiento'];
+    const estadosActivos = ['Nuevo','Cotización Lista','Cotización lista','Cotización enviada','Cotización Enviada','En seguimiento','En Seguimiento'];
     cpCotizaciones.forEach(c => {
-      const nombre = cpLimpiarFecha(c.Fechassolicitadas);
-      if (!nombre || nombre === '—') return;
+      const fechaRaw = cpLimpiarFecha(c.Fechassolicitadas);
+      if (!fechaRaw || fechaRaw === '—') return;
       if (!estadosActivos.includes(c.Estado?.Value||c.Estado||'')) return;
-      if (!interesados[nombre]) interesados[nombre] = [];
-      interesados[nombre].push(c.Title||'Empresa');
+      // Soportar múltiples fechas separadas por coma
+      fechaRaw.split(',').map(f => f.trim().toLowerCase()).forEach(key => {
+        if (!interesados[key]) interesados[key] = [];
+        interesados[key].push(c.Title||'Empresa');
+      });
     });
 
     const hoy = new Date();
@@ -1507,7 +1510,7 @@ async function cpCargarFechas() {
       const nombre = f.Title || '—';
       const reservada = f.FechaReservada === true || f.FechaReservada === 'true';
       const empresa = f.Empresa || null;
-      const interes = interesados[nombre] || [];
+      const interes = interesados[nombre.toLowerCase()] || [];
 
       let cls='', badge='', sub='';
       if (reservada) {
