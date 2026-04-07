@@ -1475,7 +1475,7 @@ function cpKPIs() {
 
 async function cpCargarFechas() {
   try {
-    const res = await fetch(CP_FLOWS.fechas, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    const res = await fetch(CP_FLOWS.fechas, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
     const data = await res.json();
     const fechas = Array.isArray(data) ? data : (data.value || []);
 
