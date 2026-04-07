@@ -1363,13 +1363,18 @@ function cpFmtQ(n) {
 
 function cpEstadoBadge(estado) {
   const map = {
-    'Nuevo':              ['cp-e-nuevo',       'Nuevo'],
-    'Cotización Lista':   ['cp-e-lista',        'Lista'],
-    'Cotización Enviada': ['cp-e-enviada',      'Enviada'],
-    'En Seguimiento':     ['cp-e-seguimiento',  'Seguimiento'],
-    'Ganada/Aprobada':    ['cp-e-ganada',       'Ganada ✓'],
-    'Ejecutado':          ['cp-e-ejecutado',    'Ejecutado'],
-    'Perdida/Cancelada':  ['cp-e-perdida',      'Perdida'],
+    'Nuevo':                ['cp-e-nuevo',       'Nuevo'],
+    'Cotización Lista':     ['cp-e-lista',        'Lista'],
+    'Cotización lista':     ['cp-e-lista',        'Lista'],
+    'Cotización enviada':   ['cp-e-enviada',      'Enviada'],
+    'Cotización Enviada':   ['cp-e-enviada',      'Enviada'],
+    'En seguimiento':       ['cp-e-seguimiento',  'Seguimiento'],
+    'En Seguimiento':       ['cp-e-seguimiento',  'Seguimiento'],
+    'Ganada / Aprobada':    ['cp-e-ganada',       'Ganada ✓'],
+    'Ganada/Aprobada':      ['cp-e-ganada',       'Ganada ✓'],
+    'Ejecutado':            ['cp-e-ejecutado',    'Ejecutado'],
+    'Perdida / Cancelada':  ['cp-e-perdida',      'Perdida'],
+    'Perdida/Cancelada':    ['cp-e-perdida',      'Perdida'],
   };
   const [cls, label] = map[estado] || ['cp-e-nuevo', estado];
   return `<span class="cp-estado ${cls}">${label}</span>`;
@@ -1390,9 +1395,23 @@ async function cpCargarCotizaciones() {
 }
 
 function cpRenderTabla() {
+  const estadoVal = c => (c.Estado?.Value || c.Estado || '');
+  
+  // Normalizar valor para filtro
+  const normalizarEstado = v => {
+    const m = {
+      'Cotización lista': 'Cotización Lista',
+      'Cotización enviada': 'Cotización Enviada',
+      'En seguimiento': 'En Seguimiento',
+      'Ganada / Aprobada': 'Ganada/Aprobada',
+      'Perdida / Cancelada': 'Perdida/Cancelada',
+    };
+    return m[v] || v;
+  };
+
   const lista = cpFiltroActivo === 'todos'
     ? cpCotizaciones
-    : cpCotizaciones.filter(c => (c.Estado?.Value || c.Estado) === cpFiltroActivo);
+    : cpCotizaciones.filter(c => normalizarEstado(estadoVal(c)) === cpFiltroActivo);
 
   document.getElementById('cp-count-cot').textContent = lista.length;
 
@@ -1402,20 +1421,18 @@ function cpRenderTabla() {
     return;
   }
 
-  // Ordenar: Seguimiento con alerta primero, luego por Modified desc
   lista.sort((a, b) => {
-    const ea = a.Estado?.Value || a.Estado;
-    const eb = b.Estado?.Value || b.Estado;
-    const pa = ea === 'En Seguimiento' && cpDiasDesde(a.Modified) >= 7 ? 0 : ea === 'En Seguimiento' ? 1 : 2;
-    const pb = eb === 'En Seguimiento' && cpDiasDesde(b.Modified) >= 7 ? 0 : eb === 'En Seguimiento' ? 1 : 2;
+    const ea = estadoVal(a); const eb = estadoVal(b);
+    const pa = ea === 'En seguimiento' && cpDiasDesde(a.Modified) >= 7 ? 0 : ea === 'En seguimiento' ? 1 : 2;
+    const pb = eb === 'En seguimiento' && cpDiasDesde(b.Modified) >= 7 ? 0 : eb === 'En seguimiento' ? 1 : 2;
     if (pa !== pb) return pa - pb;
     return new Date(b.Modified) - new Date(a.Modified);
   });
 
   document.getElementById('cp-tbody').innerHTML = lista.map(c => {
-    const estado = c.Estado?.Value || c.Estado || '—';
+    const estado = estadoVal(c);
     const dias = cpDiasDesde(c.Modified);
-    const alerta = estado === 'En Seguimiento' && dias >= 7;
+    const alerta = (estado === 'En seguimiento' || estado === 'En Seguimiento') && dias >= 7;
     const diasHtml = dias != null
       ? `<span style="color:${alerta?'var(--rojo)':'var(--texto-suave)'};font-weight:${alerta?600:400}">${dias}d${alerta?' ⚠️':''}</span>`
       : '—';
@@ -1437,12 +1454,13 @@ function cpFiltrar(btn) {
 }
 
 function cpKPIs() {
+  const estadoVal = c => (c.Estado?.Value || c.Estado || '');
   const total = cpCotizaciones.length;
-  const ganadas = cpCotizaciones.filter(c => (c.Estado?.Value||c.Estado)==='Ganada/Aprobada').length;
-  const seguimiento = cpCotizaciones.filter(c => (c.Estado?.Value||c.Estado)==='En Seguimiento').length;
-  const alertas = cpCotizaciones.filter(c => (c.Estado?.Value||c.Estado)==='En Seguimiento' && cpDiasDesde(c.Modified)>=7).length;
-  const pipeline = ['Nuevo','Cotización Lista','Cotización Enviada','En Seguimiento'];
-  const valor = cpCotizaciones.reduce((s,c) => pipeline.includes(c.Estado?.Value||c.Estado||'') ? s+(c.TotalPropuesta||0) : s, 0);
+  const ganadas = cpCotizaciones.filter(c => estadoVal(c) === 'Ganada / Aprobada').length;
+  const seguimiento = cpCotizaciones.filter(c => estadoVal(c) === 'En seguimiento').length;
+  const alertas = cpCotizaciones.filter(c => estadoVal(c) === 'En seguimiento' && cpDiasDesde(c.Modified) >= 7).length;
+  const pipeline = ['Nuevo','Cotización Lista','Cotización lista','Cotización enviada','Cotización Enviada','En seguimiento','En Seguimiento'];
+  const valor = cpCotizaciones.reduce((s,c) => pipeline.includes(estadoVal(c)) ? s+(c.TotalPropuesta||0) : s, 0);
 
   document.getElementById('cp-kpi-total').textContent = total;
   document.getElementById('cp-kpi-ganadas').textContent = ganadas;
