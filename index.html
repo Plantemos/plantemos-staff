@@ -9,18 +9,18 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --verde: #657146;
-  --verde-oscuro: #4a5233;
-  --verde-bg: #f2f4ec;
-  --verde-borde: #c8d0a8;
-  --texto: #1a1a18;
-  --texto-suave: #6b6b60;
-  --superficie: #ffffff;
-  --superficie2: #f7f7f4;
-  --borde: rgba(0,0,0,0.1);
+  --verde: #8aab5a;
+  --verde-oscuro: #c6d161;
+  --verde-bg: #2a3120;
+  --verde-borde: #3d4d28;
+  --texto: #e8e8e0;
+  --texto-suave: #8a8a78;
+  --superficie: #242b1a;
+  --superficie2: #1e2416;
+  --borde: rgba(255,255,255,0.07);
   --radio-md: 8px;
   --radio-lg: 12px;
-  --rojo: #d94f4f;
+  --rojo: #e05c5c;
 }
 
 body {
@@ -38,14 +38,14 @@ body {
 .nav {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 24px;
-  background: var(--superficie);
+  background: #1a1f11;
   border-bottom: 0.5px solid var(--borde);
   position: sticky; top: 0; z-index: 100;
 }
-.nav-logo img { height: 38px; display: block; }
+.nav-logo img { height: 38px; display: block; filter: brightness(0) invert(1) sepia(1) saturate(0.3) brightness(0.95); }
 .nav-logo-texto {
   font-family: 'DM Serif Display', serif;
-  font-size: 20px; color: var(--verde); font-style: italic;
+  font-size: 20px; color: var(--verde-oscuro); font-style: italic;
 }
 .nav-right { display: flex; align-items: center; gap: 12px; }
 .badge-admin {
@@ -60,11 +60,11 @@ body {
   border-radius: var(--radio-md); padding: 5px 12px; cursor: pointer;
   color: var(--texto-suave); font-family: 'DM Sans', sans-serif;
 }
-.btn-link:hover { background: var(--superficie2); }
+.btn-link:hover { background: var(--superficie2); color: var(--texto); }
 
 /* ── TABS ── */
 .tabs {
-  display: flex; background: var(--superficie);
+  display: flex; background: #1a1f11;
   border-bottom: 0.5px solid var(--borde);
   padding: 0 24px;
 }
@@ -74,7 +74,7 @@ body {
   border-bottom: 2px solid transparent; transition: all 0.15s;
   font-family: 'DM Sans', sans-serif;
 }
-.tab.activo { color: var(--verde); border-bottom-color: var(--verde); font-weight: 500; }
+.tab.activo { color: var(--verde-oscuro); border-bottom-color: var(--verde-oscuro); font-weight: 500; }
 .tab:hover:not(.activo) { color: var(--texto); }
 
 /* ── CONTENIDO ── */
@@ -96,15 +96,15 @@ body {
 .card-evento {
   background: var(--superficie); border: 0.5px solid var(--borde);
   border-radius: var(--radio-lg); padding: 20px; cursor: pointer;
-  transition: border-color 0.15s, transform 0.1s;
+  transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s;
 }
-.card-evento:hover { border-color: var(--verde-borde); transform: translateY(-1px); }
+.card-evento:hover { border-color: var(--verde-borde); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
 .card-evento.inscrito { border-color: var(--verde); border-width: 1.5px; }
 .card-empresa {
   font-family: 'DM Serif Display', serif;
-  font-size: 19px; margin-bottom: 4px; line-height: 1.2;
+  font-size: 19px; margin-bottom: 4px; line-height: 1.2; color: var(--texto);
 }
-.card-fecha { font-size: 13px; color: var(--verde); font-weight: 500; margin-bottom: 2px; }
+.card-fecha { font-size: 13px; color: var(--verde-oscuro); font-weight: 500; margin-bottom: 2px; }
 .card-lugar { font-size: 13px; color: var(--texto-suave); margin-bottom: 16px; }
 .card-stats { display: flex; gap: 10px; flex-wrap: wrap; }
 .chip {
@@ -122,13 +122,13 @@ body {
 
 /* ── BOTONES ── */
 .btn-primario {
-  background: var(--verde); color: #fff; border: none;
+  background: var(--verde-oscuro); color: #1a1f11; border: none;
   border-radius: var(--radio-md); padding: 10px 20px;
-  font-size: 14px; font-weight: 500; cursor: pointer;
+  font-size: 14px; font-weight: 600; cursor: pointer;
   font-family: 'DM Sans', sans-serif; transition: background 0.15s;
 }
-.btn-primario:hover { background: var(--verde-oscuro); }
-.btn-primario:disabled { background: #ccc; cursor: not-allowed; }
+.btn-primario:hover { background: #d4e06a; }
+.btn-primario:disabled { background: #3a4230; color: var(--texto-suave); cursor: not-allowed; }
 .btn-secundario {
   background: none; color: var(--texto); border: 0.5px solid var(--borde);
   border-radius: var(--radio-md); padding: 10px 20px;
@@ -147,8 +147,8 @@ body {
 .detalle-meta { display: flex; gap: 24px; margin-top: 8px; flex-wrap: wrap; }
 .meta-item { font-size: 13px; }
 .meta-label { color: var(--texto-suave); margin-bottom: 2px; }
-.meta-valor { font-weight: 500; }
-.meta-valor.verde { color: var(--verde); }
+.meta-valor { font-weight: 500; color: var(--texto); }
+.meta-valor.verde { color: var(--verde-oscuro); }
 .btn-volver {
   font-size: 13px; background: none; border: 0.5px solid var(--borde);
   border-radius: var(--radio-md); padding: 7px 14px; cursor: pointer;
@@ -170,25 +170,25 @@ body {
   background: var(--superficie); cursor: pointer; transition: border-color 0.15s;
 }
 .tarea-item:hover { border-color: var(--verde-borde); }
-.tarea-item.seleccionada { border-color: var(--verde); border-width: 1.5px; background: var(--verde-bg); }
+.tarea-item.seleccionada { border-color: var(--verde-oscuro); border-width: 1.5px; background: var(--verde-bg); }
 .tarea-item.ya-inscrito { border-color: var(--verde); background: var(--verde-bg); cursor: default; }
 .tarea-check {
   width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0;
-  border: 1.5px solid var(--borde); background: var(--superficie);
+  border: 1.5px solid var(--borde); background: var(--superficie2);
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; color: transparent; transition: all 0.15s;
 }
 .tarea-item.seleccionada .tarea-check,
 .tarea-item.ya-inscrito .tarea-check {
-  background: var(--verde); border-color: var(--verde); color: #fff;
+  background: var(--verde-oscuro); border-color: var(--verde-oscuro); color: #1a1f11;
 }
-.tarea-nombre { font-size: 14px; flex: 1; }
+.tarea-nombre { font-size: 14px; flex: 1; color: var(--texto); }
 .tarea-chip {
   font-size: 12px; padding: 3px 9px; border-radius: 20px;
   background: var(--superficie2); color: var(--texto-suave);
   border: 0.5px solid var(--borde); white-space: nowrap;
 }
-.tarea-item.seleccionada .tarea-chip { background: #fff; }
+.tarea-item.seleccionada .tarea-chip { background: var(--superficie); }
 
 .banner-inscrito {
   padding: 12px 16px; background: var(--verde-bg);
@@ -201,8 +201,8 @@ body {
   display: flex; align-items: center; justify-content: space-between;
   gap: 16px; flex-wrap: wrap;
 }
-.accion-bar-texto { font-size: 14px; }
-.accion-count { font-weight: 500; color: var(--verde); }
+.accion-bar-texto { font-size: 14px; color: var(--texto); }
+.accion-count { font-weight: 500; color: var(--verde-oscuro); }
 
 /* ── CONFIRMACIÓN ── */
 .paso-header { text-align: center; padding: 24px 0 32px; }
@@ -212,14 +212,14 @@ body {
   background: var(--superficie); border: 0.5px solid var(--borde);
   border-radius: var(--radio-lg); padding: 24px; max-width: 500px; margin: 0 auto;
 }
-.conf-empresa { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 16px; }
+.conf-empresa { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 16px; color: var(--texto); }
 .conf-fila {
   display: flex; justify-content: space-between; padding: 9px 0;
   border-bottom: 0.5px solid var(--borde); font-size: 14px; gap: 16px;
 }
 .conf-fila:last-of-type { border-bottom: none; }
 .conf-label { color: var(--texto-suave); flex-shrink: 0; }
-.conf-valor { font-weight: 500; text-align: right; }
+.conf-valor { font-weight: 500; text-align: right; color: var(--texto); }
 .conf-tareas-lista { font-size: 13px; color: var(--verde-oscuro); line-height: 1.9; text-align: right; }
 .btn-grupo { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; }
 
@@ -229,9 +229,9 @@ body {
   width: 64px; height: 64px; border-radius: 50%;
   background: var(--verde-bg); border: 2px solid var(--verde-borde);
   display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 20px; font-size: 26px; color: var(--verde);
+  margin: 0 auto 20px; font-size: 26px; color: var(--verde-oscuro);
 }
-.exito-titulo { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 8px; }
+.exito-titulo { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 8px; color: var(--texto); }
 .exito-sub { font-size: 14px; color: var(--texto-suave); margin-bottom: 28px; line-height: 1.6; }
 
 /* ── MIS INSCRIPCIONES ── */
@@ -243,15 +243,15 @@ body {
   display: flex; justify-content: space-between; align-items: flex-start;
   margin-bottom: 14px; gap: 12px;
 }
-.inscripcion-empresa { font-family: 'DM Serif Display', serif; font-size: 18px; margin-bottom: 4px; }
-.inscripcion-meta { font-size: 13px; color: var(--verde); }
+.inscripcion-empresa { font-family: 'DM Serif Display', serif; font-size: 18px; margin-bottom: 4px; color: var(--texto); }
+.inscripcion-meta { font-size: 13px; color: var(--verde-oscuro); }
 .inscripcion-tarea {
   font-size: 13px; padding: 7px 0;
   border-bottom: 0.5px solid var(--borde);
-  display: flex; gap: 8px; align-items: center;
+  display: flex; gap: 8px; align-items: center; color: var(--texto);
 }
 .inscripcion-tarea:last-child { border-bottom: none; }
-.check-verde { color: var(--verde); font-size: 12px; }
+.check-verde { color: var(--verde-oscuro); font-size: 12px; }
 .btn-quitar-tarea {
   margin-left: auto; flex-shrink: 0;
   background: none; border: 0.5px solid var(--borde);
@@ -259,7 +259,7 @@ body {
   color: var(--texto-suave); cursor: pointer; font-family: 'DM Sans', sans-serif;
   transition: all 0.15s;
 }
-.btn-quitar-tarea:hover { background: #fff3f3; border-color: var(--rojo); color: var(--rojo); }
+.btn-quitar-tarea:hover { background: rgba(224,92,92,0.15); border-color: var(--rojo); color: var(--rojo); }
 .btn-retiro-evento {
   margin-top: 12px; width: 100%;
   background: none; border: 0.5px solid var(--borde);
@@ -267,7 +267,7 @@ body {
   color: var(--texto-suave); cursor: pointer; font-family: 'DM Sans', sans-serif;
   transition: all 0.15s; text-align: center;
 }
-.btn-retiro-evento:hover { background: #fff3f3; border-color: var(--rojo); color: var(--rojo); }
+.btn-retiro-evento:hover { background: rgba(224,92,92,0.12); border-color: var(--rojo); color: var(--rojo); }
 
 /* ── ADMIN ── */
 .admin-subtabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -276,41 +276,43 @@ body {
   border: 0.5px solid var(--borde); background: none; cursor: pointer;
   color: var(--texto-suave); font-family: 'DM Sans', sans-serif; transition: all 0.15s;
 }
-.admin-stab.activo { background: var(--verde); color: #fff; border-color: var(--verde); }
+.admin-stab.activo { background: var(--verde-oscuro); color: #1a1f11; border-color: var(--verde-oscuro); }
 .tabla-admin { width: 100%; border-collapse: collapse; font-size: 13px; }
 .tabla-admin th {
   text-align: left; padding: 8px 12px; font-weight: 500;
   color: var(--texto-suave); border-bottom: 0.5px solid var(--borde); font-size: 12px;
 }
-.tabla-admin td { padding: 10px 12px; border-bottom: 0.5px solid var(--borde); }
+.tabla-admin td { padding: 10px 12px; border-bottom: 0.5px solid var(--borde); color: var(--texto); }
 .tabla-admin tr:last-child td { border-bottom: none; }
 .tabla-admin tr:hover td { background: var(--superficie2); }
 .sin-asignar { color: var(--rojo); font-style: italic; }
-.con-asignado { color: var(--verde); }
+.con-asignado { color: var(--verde-oscuro); }
 
 /* ── LOG DE ACTIVIDAD ── */
 .log-badge {
   font-size: 11px; font-weight: 500; letter-spacing: 0.3px;
   padding: 3px 9px; border-radius: 20px; white-space: nowrap;
 }
-.log-login { background: #f0f4ff; color: #3a5aad; border: 0.5px solid #c5d0f0; }
-.log-inscripcion { background: var(--verde-bg); color: var(--verde-oscuro); border: 0.5px solid var(--verde-borde); }
-.log-retiro { background: #fff3f3; color: var(--rojo); border: 0.5px solid #f5c0c0; }
+.log-login      { background: #1e2a40; color: #7aa4d4; border: 0.5px solid #2a3d5a; }
+.log-inscripcion{ background: var(--verde-bg); color: var(--verde-oscuro); border: 0.5px solid var(--verde-borde); }
+.log-retiro     { background: #3a1e1e; color: var(--rojo); border: 0.5px solid #5a2a2a; }
 
 /* ── LOGIN ── */
 .login-wrap {
   min-height: 100vh; display: flex; align-items: center;
   justify-content: center; padding: 40px 20px;
+  background: var(--superficie2);
 }
 .login-card {
   background: var(--superficie); border: 0.5px solid var(--borde);
   border-radius: var(--radio-lg); padding: 44px 40px;
   max-width: 360px; width: 100%; text-align: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
 }
-.login-logo { height: 48px; margin: 0 auto 8px; display: block; }
+.login-logo { height: 48px; margin: 0 auto 8px; display: block; filter: brightness(0) invert(1) sepia(1) saturate(0.4) brightness(0.9); }
 .login-logo-txt {
   font-family: 'DM Serif Display', serif; font-size: 30px;
-  color: var(--verde); font-style: italic; margin-bottom: 8px;
+  color: var(--verde-oscuro); font-style: italic; margin-bottom: 8px;
 }
 .login-tagline { font-size: 13px; color: var(--texto-suave); margin-bottom: 36px; line-height: 1.5; }
 .login-label { font-size: 12px; color: var(--texto-suave); margin-bottom: 6px; display: block; text-align: left; }
@@ -321,7 +323,8 @@ body {
   font-family: 'DM Sans', sans-serif; margin-bottom: 12px;
   transition: border-color 0.15s;
 }
-.login-input:focus { outline: none; border-color: var(--verde); }
+.login-input:focus { outline: none; border-color: var(--verde-oscuro); }
+.login-input::placeholder { color: var(--texto-suave); }
 .login-error { font-size: 12px; color: var(--rojo); margin-bottom: 12px; text-align: left; }
 .login-nota { font-size: 12px; color: var(--texto-suave); margin-top: 14px; }
 
@@ -333,6 +336,132 @@ body {
   vertical-align: middle; margin-right: 6px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════
+   CONTROL PANEL — estilos exclusivos JCM
+══════════════════════════════════════════ */
+.cp-wrap { padding: 20px 0; display: flex; flex-direction: column; gap: 20px; }
+
+/* KPI strip */
+.cp-kpis { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
+.cp-kpi {
+  background: var(--superficie); border: 0.5px solid var(--borde);
+  border-radius: var(--radio-lg); padding: 16px 18px;
+  border-top: 3px solid var(--verde); position: relative;
+}
+.cp-kpi.warn  { border-top-color: #e5a000; }
+.cp-kpi.alert { border-top-color: var(--rojo); }
+.cp-kpi.accent{ border-top-color: var(--verde-oscuro); }
+.cp-kpi-label { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--texto-suave); margin-bottom: 6px; }
+.cp-kpi-val   { font-family: 'DM Serif Display', serif; font-size: 30px; line-height: 1; color: var(--texto); }
+.cp-kpi-sub   { font-size: 11px; color: var(--texto-suave); margin-top: 4px; }
+
+/* Dos columnas */
+.cp-cols { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; }
+
+/* Card genérica */
+.cp-card {
+  background: var(--superficie); border: 0.5px solid var(--borde);
+  border-radius: var(--radio-lg); overflow: hidden;
+}
+.cp-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px 12px; border-bottom: 0.5px solid var(--borde);
+}
+.cp-card-title {
+  font-family: 'DM Serif Display', serif; font-size: 15px; font-weight: 400;
+  color: var(--verde); display: flex; align-items: center; gap: 7px;
+}
+.cp-card-count {
+  font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px;
+  background: var(--superficie2); color: var(--texto-suave);
+  border: 0.5px solid var(--borde);
+}
+
+/* Filtros */
+.cp-filters {
+  display: flex; gap: 5px; flex-wrap: wrap;
+  padding: 10px 18px; border-bottom: 0.5px solid var(--borde);
+  background: var(--superficie2);
+}
+.cp-fbtn {
+  padding: 4px 11px; border-radius: 20px; border: 0.5px solid var(--borde);
+  background: var(--superficie); font-size: 11px; font-family: 'DM Sans', sans-serif;
+  color: var(--texto-suave); cursor: pointer; transition: all 0.15s;
+}
+.cp-fbtn:hover { border-color: var(--verde-oscuro); color: var(--verde-oscuro); }
+.cp-fbtn.activo { background: var(--verde-oscuro); color: #1a1f11; border-color: var(--verde-oscuro); font-weight: 600; }
+
+/* Tabla pipeline */
+.cp-table-wrap { overflow-x: auto; max-height: 390px; overflow-y: auto; }
+.cp-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.cp-table thead th {
+  position: sticky; top: 0; background: var(--superficie2);
+  padding: 9px 13px; text-align: left; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--texto-suave);
+  border-bottom: 0.5px solid var(--borde); white-space: nowrap;
+}
+.cp-table tbody tr { border-bottom: 0.5px solid var(--borde); transition: background 0.1s; }
+.cp-table tbody tr:hover { background: var(--superficie2); }
+.cp-table tbody td { padding: 10px 13px; vertical-align: middle; white-space: nowrap; color: var(--texto); }
+.cp-empresa-cell { font-weight: 500; max-width: 160px; overflow: hidden; text-overflow: ellipsis; color: var(--texto); }
+.cp-monto { font-family: 'DM Serif Display', serif; font-size: 13px; color: var(--verde-oscuro); text-align: right; }
+.cp-row-alerta td { background: rgba(224,92,92,0.08) !important; }
+
+/* Estado badges */
+.cp-estado {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; white-space: nowrap;
+}
+.cp-estado::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; opacity:0.65; }
+.cp-e-nuevo      { background: #1e2040; color: #8899ee; }
+.cp-e-lista      { background: #1a2e1a; color: #6dcc6d; }
+.cp-e-enviada    { background: #1a2040; color: #6699dd; }
+.cp-e-seguimiento{ background: #2e2010; color: #ddaa44; }
+.cp-e-ganada     { background: #1a3a1a; color: #6dcc6d; border: 0.5px solid #2a5a2a; }
+.cp-e-ejecutado  { background: var(--superficie2); color: var(--texto-suave); }
+.cp-e-perdida    { background: #3a1a1a; color: #ee6666; }
+
+/* Fechas */
+.cp-fechas { display: flex; flex-direction: column; gap: 7px; padding: 14px 18px; max-height: 390px; overflow-y: auto; }
+.cp-fecha-item {
+  display: grid; grid-template-columns: 52px 1fr auto; align-items: center;
+  gap: 12px; padding: 10px 14px; border-radius: var(--radio-md);
+  border: 0.5px solid var(--borde); background: var(--superficie); transition: box-shadow 0.15s;
+}
+.cp-fecha-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+.cp-fecha-item.reservada { background: #1a2e1a; border-color: #2d5a2d; }
+.cp-fecha-item.interesado { background: #2a2010; border-color: #5a4020; }
+.cp-fecha-num  { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--verde); line-height: 1; text-align:center; }
+.cp-fecha-mes  { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--texto-suave); font-weight: 600; text-align:center; }
+.cp-fecha-nombre { font-weight: 500; font-size: 12px; }
+.cp-fecha-sub  { font-size: 11px; color: var(--texto-suave); margin-top: 2px; }
+.cp-fbadge     { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+.cp-fb-libre   { background: var(--superficie2); color: var(--texto-suave); border: 0.5px solid var(--borde); }
+.cp-fb-interes { background: #3a2510; color: #f0a050; border: 0.5px solid #5a3a18; }
+.cp-fb-reserv  { background: #1a3a1a; color: #6dcc6d; border: 0.5px solid #2a5a2a; }
+
+/* Footer timestamp */
+.cp-footer { padding: 8px 18px; border-top: 0.5px solid var(--borde); font-size: 11px; color: var(--texto-suave); text-align: right; }
+
+/* Botón refresh */
+.cp-refresh {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; background: none; border: 0.5px solid var(--borde);
+  border-radius: 20px; padding: 4px 12px; cursor: pointer;
+  color: var(--texto-suave); font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+}
+.cp-refresh:hover { border-color: var(--verde-oscuro); color: var(--verde-oscuro); }
+
+.cp-spinner-wrap { padding: 32px; text-align: center; color: var(--texto-suave); font-size: 13px; }
+
+@media (max-width: 900px) {
+  .cp-kpis { grid-template-columns: repeat(3,1fr); }
+  .cp-cols  { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .cp-kpis { grid-template-columns: repeat(2,1fr); }
+}
 </style>
 </head>
 <body>
@@ -388,6 +517,7 @@ body {
     <button class="tab activo" id="tab-btn-eventos" onclick="cambiarTab('eventos')">Eventos abiertos</button>
     <button class="tab" id="tab-btn-mis" onclick="cambiarTab('mis')">Mis inscripciones</button>
     <button class="tab hidden" id="tab-btn-admin" onclick="cambiarTab('admin')">Administración</button>
+    <button class="tab hidden" id="tab-btn-control" onclick="cambiarTab('control')">⚡ Control Panel</button>
   </div>
 
   <!-- TAB EVENTOS -->
@@ -438,6 +568,116 @@ body {
       <button class="admin-stab" onclick="adminStab('log')">Log de actividad</button>
     </div>
     <div id="admin-contenido"></div>
+  </div>
+
+  <!-- TAB CONTROL PANEL — solo JCM -->
+  <div id="tab-control" class="contenido hidden">
+    <div class="cp-wrap">
+
+      <!-- Encabezado con refresh -->
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <div>
+          <div style="font-family:'DM Serif Display',serif; font-size:20px; color:var(--verde);">Panel de Control</div>
+          <div id="cp-subtitle" style="font-size:12px; color:var(--texto-suave); margin-top:2px;">Cargando datos...</div>
+        </div>
+        <button class="cp-refresh" onclick="cpCargarTodo()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+          </svg>
+          Actualizar datos
+        </button>
+      </div>
+
+      <!-- KPIs -->
+      <div class="cp-kpis">
+        <div class="cp-kpi">
+          <div class="cp-kpi-label">Pipeline activo</div>
+          <div class="cp-kpi-val" id="cp-kpi-total">—</div>
+          <div class="cp-kpi-sub">cotizaciones vigentes</div>
+        </div>
+        <div class="cp-kpi accent">
+          <div class="cp-kpi-label">Valor en pipeline</div>
+          <div class="cp-kpi-val" id="cp-kpi-valor" style="font-size:20px;">—</div>
+          <div class="cp-kpi-sub">GTQ activo estimado</div>
+        </div>
+        <div class="cp-kpi">
+          <div class="cp-kpi-label">Eventos confirmados</div>
+          <div class="cp-kpi-val" id="cp-kpi-ganadas">—</div>
+          <div class="cp-kpi-sub">ganados / aprobados</div>
+        </div>
+        <div class="cp-kpi warn">
+          <div class="cp-kpi-label">En seguimiento</div>
+          <div class="cp-kpi-val" id="cp-kpi-seguimiento">—</div>
+          <div class="cp-kpi-sub">pendientes de respuesta</div>
+        </div>
+        <div class="cp-kpi alert">
+          <div class="cp-kpi-label">Sin respuesta +7 días</div>
+          <div class="cp-kpi-val" id="cp-kpi-alertas">—</div>
+          <div class="cp-kpi-sub">requieren atención</div>
+        </div>
+      </div>
+
+      <!-- Pipeline + Fechas -->
+      <div class="cp-cols">
+
+        <!-- Pipeline de cotizaciones -->
+        <div class="cp-card">
+          <div class="cp-card-head">
+            <div class="cp-card-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+              Pipeline de Cotizaciones
+            </div>
+            <span class="cp-card-count" id="cp-count-cot">—</span>
+          </div>
+          <div class="cp-filters" id="cp-filtros">
+            <button class="cp-fbtn activo" data-estado="todos" onclick="cpFiltrar(this)">Todos</button>
+            <button class="cp-fbtn" data-estado="Nuevo" onclick="cpFiltrar(this)">Nuevo</button>
+            <button class="cp-fbtn" data-estado="Cotización Lista" onclick="cpFiltrar(this)">Lista</button>
+            <button class="cp-fbtn" data-estado="Cotización Enviada" onclick="cpFiltrar(this)">Enviada</button>
+            <button class="cp-fbtn" data-estado="En Seguimiento" onclick="cpFiltrar(this)">Seguimiento</button>
+            <button class="cp-fbtn" data-estado="Ganada/Aprobada" onclick="cpFiltrar(this)">Ganada</button>
+          </div>
+          <div class="cp-table-wrap">
+            <table class="cp-table">
+              <thead>
+                <tr>
+                  <th>Empresa</th>
+                  <th>Estado</th>
+                  <th>Fecha solicitada</th>
+                  <th style="text-align:right">Total</th>
+                  <th>Días</th>
+                </tr>
+              </thead>
+              <tbody id="cp-tbody">
+                <tr><td colspan="5"><div class="cp-spinner-wrap"><span class="spinner"></span> Cargando cotizaciones...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="cp-footer" id="cp-footer-cot">—</div>
+        </div>
+
+        <!-- Calendario temporada -->
+        <div class="cp-card">
+          <div class="cp-card-head">
+            <div class="cp-card-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Temporada 2026
+            </div>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <span style="width:7px;height:7px;border-radius:50%;background:#6dcc6d;display:inline-block;"></span>
+              <span style="font-size:10px;color:var(--texto-suave);">Reservada</span>
+              <span style="width:7px;height:7px;border-radius:50%;background:#f0a050;display:inline-block;margin-left:5px;"></span>
+              <span style="font-size:10px;color:var(--texto-suave);">Con interés</span>
+            </div>
+          </div>
+          <div class="cp-fechas" id="cp-fechas">
+            <div class="cp-spinner-wrap"><span class="spinner"></span> Cargando fechas...</div>
+          </div>
+          <div class="cp-footer" id="cp-footer-fechas">—</div>
+        </div>
+
+      </div>
+    </div>
   </div>
 </div>
 
@@ -619,6 +859,7 @@ function completarLogin(email) {
   if (S.esAdmin) {
     document.getElementById('nav-badge-admin').classList.remove('hidden');
     document.getElementById('tab-btn-admin').classList.remove('hidden');
+    document.getElementById('tab-btn-control').classList.remove('hidden');
   }
   registrarLog('Login exitoso', '');
   mostrar('p-main');
@@ -641,6 +882,7 @@ function logout() {
   document.getElementById('input-email').value = '';
   document.getElementById('nav-badge-admin').classList.add('hidden');
   document.getElementById('tab-btn-admin').classList.add('hidden');
+  document.getElementById('tab-btn-control').classList.add('hidden');
   mostrar('p-login');
 }
 
@@ -648,12 +890,16 @@ function logout() {
 // TABS
 // ══════════════════════════════════════════
 function cambiarTab(tab) {
-  ['eventos','mis','admin'].forEach(t => {
-    document.getElementById(`tab-btn-${t === 'mis' ? 'mis' : t}`).classList.toggle('activo', t === tab);
-    document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+  ['eventos','mis','admin','control'].forEach(t => {
+    const btnId = t === 'mis' ? 'tab-btn-mis' : `tab-btn-${t}`;
+    const btn = document.getElementById(btnId);
+    if (btn) btn.classList.toggle('activo', t === tab);
+    const panel = document.getElementById(`tab-${t}`);
+    if (panel) panel.classList.toggle('hidden', t !== tab);
   });
   if (tab === 'mis') cargarMisInscripciones();
   if (tab === 'admin') { cargarTodasInscripciones(); }
+  if (tab === 'control') { cpCargarTodo(); }
 }
 
 // ══════════════════════════════════════════
@@ -1084,7 +1330,211 @@ async function cargarLog() {
   }
 }
 
-function renderAdmin() {
+// ══════════════════════════════════════════
+// CONTROL PANEL — lógica exclusiva JCM
+// ══════════════════════════════════════════
+const CP_FLOWS = {
+  cotizaciones: 'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/06f313a1a5fe4ce39319ad3f751a4434/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=DNGVBSDLRlzMyLnkF8vFk0wf04wmFtgkDb-iBFqKPkQ',
+  fechas:        'https://default882c9350aa5d48b19b49f8d540a2ce.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/7f9142bfad574b748f41dc25ffbb1097/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=F3bdB82NiE1TUOxWjejhTH1iKto7UqwnYXGs57prMu0'
+};
+
+let cpCotizaciones = [];
+let cpFiltroActivo = 'todos';
+let cpCargado = false;
+
+function cpNow() {
+  return new Date().toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
+}
+
+function cpDiasDesde(dateStr) {
+  if (!dateStr) return null;
+  return Math.floor((new Date() - new Date(dateStr)) / 86400000);
+}
+
+function cpLimpiarFecha(str) {
+  if (!str) return '—';
+  return str.replace(/[\[\]"]/g, '').trim();
+}
+
+function cpFmtQ(n) {
+  if (!n) return '—';
+  return 'Q' + Number(n).toLocaleString('es-GT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function cpEstadoBadge(estado) {
+  const map = {
+    'Nuevo':              ['cp-e-nuevo',       'Nuevo'],
+    'Cotización Lista':   ['cp-e-lista',        'Lista'],
+    'Cotización Enviada': ['cp-e-enviada',      'Enviada'],
+    'En Seguimiento':     ['cp-e-seguimiento',  'Seguimiento'],
+    'Ganada/Aprobada':    ['cp-e-ganada',       'Ganada ✓'],
+    'Ejecutado':          ['cp-e-ejecutado',    'Ejecutado'],
+    'Perdida/Cancelada':  ['cp-e-perdida',      'Perdida'],
+  };
+  const [cls, label] = map[estado] || ['cp-e-nuevo', estado];
+  return `<span class="cp-estado ${cls}">${label}</span>`;
+}
+
+async function cpCargarCotizaciones() {
+  try {
+    const res = await fetch(CP_FLOWS.cotizaciones, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    const data = await res.json();
+    cpCotizaciones = Array.isArray(data) ? data : (data.value || []);
+    cpRenderTabla();
+    cpKPIs();
+    document.getElementById('cp-footer-cot').textContent = `Actualizado a las ${cpNow()}`;
+  } catch(e) {
+    document.getElementById('cp-tbody').innerHTML =
+      `<tr><td colspan="5"><div class="cp-spinner-wrap" style="color:var(--rojo)">⚠️ Error al cargar cotizaciones.<br><small>${e.message}</small></div></td></tr>`;
+  }
+}
+
+function cpRenderTabla() {
+  const lista = cpFiltroActivo === 'todos'
+    ? cpCotizaciones
+    : cpCotizaciones.filter(c => (c.Estado?.Value || c.Estado) === cpFiltroActivo);
+
+  document.getElementById('cp-count-cot').textContent = lista.length;
+
+  if (!lista.length) {
+    document.getElementById('cp-tbody').innerHTML =
+      `<tr><td colspan="5"><div class="cp-spinner-wrap">Sin registros en este estado.</div></td></tr>`;
+    return;
+  }
+
+  // Ordenar: Seguimiento con alerta primero, luego por Modified desc
+  lista.sort((a, b) => {
+    const ea = a.Estado?.Value || a.Estado;
+    const eb = b.Estado?.Value || b.Estado;
+    const pa = ea === 'En Seguimiento' && cpDiasDesde(a.Modified) >= 7 ? 0 : ea === 'En Seguimiento' ? 1 : 2;
+    const pb = eb === 'En Seguimiento' && cpDiasDesde(b.Modified) >= 7 ? 0 : eb === 'En Seguimiento' ? 1 : 2;
+    if (pa !== pb) return pa - pb;
+    return new Date(b.Modified) - new Date(a.Modified);
+  });
+
+  document.getElementById('cp-tbody').innerHTML = lista.map(c => {
+    const estado = c.Estado?.Value || c.Estado || '—';
+    const dias = cpDiasDesde(c.Modified);
+    const alerta = estado === 'En Seguimiento' && dias >= 7;
+    const diasHtml = dias != null
+      ? `<span style="color:${alerta?'var(--rojo)':'var(--texto-suave)'};font-weight:${alerta?600:400}">${dias}d${alerta?' ⚠️':''}</span>`
+      : '—';
+    return `<tr class="${alerta?'cp-row-alerta':''}">
+      <td class="cp-empresa-cell" title="${c.Title||''}">${c.Title||'—'}</td>
+      <td>${cpEstadoBadge(estado)}</td>
+      <td style="color:var(--texto-suave);font-size:11px;">${cpLimpiarFecha(c.Fechassolicitadas)}</td>
+      <td class="cp-monto">${cpFmtQ(c.TotalPropuesta)}</td>
+      <td>${diasHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+function cpFiltrar(btn) {
+  document.querySelectorAll('.cp-fbtn').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+  cpFiltroActivo = btn.dataset.estado;
+  cpRenderTabla();
+}
+
+function cpKPIs() {
+  const total = cpCotizaciones.length;
+  const ganadas = cpCotizaciones.filter(c => (c.Estado?.Value||c.Estado)==='Ganada/Aprobada').length;
+  const seguimiento = cpCotizaciones.filter(c => (c.Estado?.Value||c.Estado)==='En Seguimiento').length;
+  const alertas = cpCotizaciones.filter(c => (c.Estado?.Value||c.Estado)==='En Seguimiento' && cpDiasDesde(c.Modified)>=7).length;
+  const pipeline = ['Nuevo','Cotización Lista','Cotización Enviada','En Seguimiento'];
+  const valor = cpCotizaciones.reduce((s,c) => pipeline.includes(c.Estado?.Value||c.Estado||'') ? s+(c.TotalPropuesta||0) : s, 0);
+
+  document.getElementById('cp-kpi-total').textContent = total;
+  document.getElementById('cp-kpi-ganadas').textContent = ganadas;
+  document.getElementById('cp-kpi-seguimiento').textContent = seguimiento;
+  document.getElementById('cp-kpi-alertas').textContent = alertas;
+  document.getElementById('cp-kpi-valor').textContent = valor > 0 ? 'Q'+(valor/1000).toFixed(0)+'K' : '—';
+
+  const hoy = new Date().toLocaleDateString('es-GT', { weekday:'long', day:'numeric', month:'long' });
+  document.getElementById('cp-subtitle').textContent =
+    `${hoy} · ${total} cotizaciones activas${alertas>0?' · ⚠️ '+alertas+' urgentes':''}`;
+}
+
+async function cpCargarFechas() {
+  try {
+    const res = await fetch(CP_FLOWS.fechas, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    const data = await res.json();
+    const fechas = Array.isArray(data) ? data : (data.value || []);
+
+    // Cruzar con cotizaciones para detectar interesados por nombre de fecha
+    const interesados = {};
+    const estadosActivos = ['Nuevo','Cotización Lista','Cotización Enviada','En Seguimiento'];
+    cpCotizaciones.forEach(c => {
+      const nombre = cpLimpiarFecha(c.Fechassolicitadas);
+      if (!nombre || nombre === '—') return;
+      if (!estadosActivos.includes(c.Estado?.Value||c.Estado||'')) return;
+      if (!interesados[nombre]) interesados[nombre] = [];
+      interesados[nombre].push(c.Title||'Empresa');
+    });
+
+    const hoy = new Date();
+    const futuras = fechas
+      .filter(f => f.Fecha && new Date(f.Fecha) >= hoy)
+      .sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
+
+    if (!futuras.length) {
+      document.getElementById('cp-fechas').innerHTML = '<div class="cp-spinner-wrap">No hay fechas próximas disponibles.</div>';
+      return;
+    }
+
+    document.getElementById('cp-fechas').innerHTML = futuras.map(f => {
+      const fecha = new Date(f.Fecha);
+      const dia = fecha.getUTCDate();
+      const mes = fecha.toLocaleDateString('es-GT', { month:'short', timeZone:'UTC' }).replace('.','');
+      const nombre = f.Title || '—';
+      const reservada = f.FechaReservada === true || f.FechaReservada === 'true';
+      const empresa = f.Empresa || null;
+      const interes = interesados[nombre] || [];
+
+      let cls='', badge='', sub='';
+      if (reservada) {
+        cls='reservada';
+        badge=`<span class="cp-fbadge cp-fb-reserv">✓ Reservada</span>`;
+        sub = empresa ? `<div class="cp-fecha-sub">${empresa}</div>` : '';
+      } else if (interes.length > 0) {
+        cls='interesado';
+        badge=`<span class="cp-fbadge cp-fb-interes">${interes.length} interesado${interes.length>1?'s':''}</span>`;
+        sub=`<div class="cp-fecha-sub">${interes.slice(0,2).join(', ')}${interes.length>2?'…':''}</div>`;
+      } else {
+        badge=`<span class="cp-fbadge cp-fb-libre">Disponible</span>`;
+      }
+
+      return `<div class="cp-fecha-item ${cls}">
+        <div><div class="cp-fecha-num">${dia}</div><div class="cp-fecha-mes">${mes}</div></div>
+        <div><div class="cp-fecha-nombre">${nombre}</div>${sub}</div>
+        ${badge}
+      </div>`;
+    }).join('');
+
+    document.getElementById('cp-footer-fechas').textContent = `Actualizado a las ${cpNow()}`;
+  } catch(e) {
+    document.getElementById('cp-fechas').innerHTML =
+      `<div class="cp-spinner-wrap" style="color:var(--rojo)">⚠️ Error al cargar fechas.<br><small>${e.message}</small></div>`;
+  }
+}
+
+async function cpCargarTodo() {
+  if (!S.esAdmin) return; // Doble protección
+  // Reset visual
+  document.getElementById('cp-tbody').innerHTML =
+    '<tr><td colspan="5"><div class="cp-spinner-wrap"><span class="spinner"></span> Cargando...</div></td></tr>';
+  document.getElementById('cp-fechas').innerHTML =
+    '<div class="cp-spinner-wrap"><span class="spinner"></span> Cargando fechas...</div>';
+  ['cp-kpi-total','cp-kpi-valor','cp-kpi-ganadas','cp-kpi-seguimiento','cp-kpi-alertas'].forEach(id => {
+    document.getElementById(id).textContent = '—';
+  });
+  document.getElementById('cp-subtitle').textContent = 'Actualizando datos...';
+
+  await cpCargarCotizaciones();  // primero, fechas necesita el cruce
+  await cpCargarFechas();
+  cpCargado = true;
+}
+
   const cont = document.getElementById('admin-contenido');
 
   // Construir mapa de tareas con responsable real desde todasInscripciones
