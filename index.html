@@ -720,7 +720,15 @@ body {
     <div class="exito-icono">✓</div>
     <div class="exito-titulo">¡Inscripción confirmada!</div>
     <div class="exito-sub" id="exito-msg"></div>
-    <button class="btn-primario" onclick="irMisInscripciones()">Ver mis inscripciones</button>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+      <button class="btn-primario" onclick="irMisInscripciones()">Ver mis inscripciones</button>
+      <button class="btn-secundario" id="btn-calendario" onclick="descargarCalendario()" style="display:flex; align-items:center; gap:7px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        Agregar a mi calendario
+      </button>
+    </div>
   </div>
 </div>
 
@@ -1176,11 +1184,106 @@ async function confirmarInscripcion() {
     await cargarMisInscripcionesData();
     mostrar('p-exito');
   } catch(e) {
-    btn.disabled = false;
-    btn.textContent = 'Confirmar →';
     alert('Hubo un error al guardar. Intenta de nuevo.');
     console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Confirmar →';
   }
+}
+
+// ══════════════════════════════════════════
+// CALENDARIO — generar .ics para descarga
+// ══════════════════════════════════════════
+function parsearFechaEvento(fechaTexto) {
+  // Convierte "Sábado 2 de Mayo" → "20260502" (formato YYYYMMDD para .ics)
+  // Asume año actual o siguiente si el mes ya pasó
+  const meses = {
+    enero:1, febrero:2, marzo:3, abril:4, mayo:5, junio:6,
+    julio:7, agosto:8, septiembre:9, octubre:10, noviembre:11, diciembre:12
+  };
+  if (!fechaTexto) return null;
+
+  // Limpiar texto: quitar día de semana, comas, puntos
+  const limpio = fechaTexto.toLowerCase()
+    .replace(/lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo/g, '')
+    .replace(/[,\.]/g, '').trim();
+
+  // Buscar número y mes: "2 de mayo", "2 mayo"
+  const match = limpio.match(/(\d{1,2})\s+(?:de\s+)?([a-záéíóúü]+)/);
+  if (!match) return null;
+
+  const dia = parseInt(match[1]);
+  const mesNombre = match[2].normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // quitar tildes
+  const mes = meses[mesNombre];
+  if (!mes || !dia) return null;
+
+  const hoy = new Date();
+  let anio = hoy.getFullYear();
+  // Si el mes ya pasó este año, usar el siguiente
+  if (mes < hoy.getMonth() + 1) anio++;
+
+  const mm = String(mes).padStart(2, '0');
+  const dd = String(dia).padStart(2, '0');
+  return `${anio}${mm}${dd}`;
+}
+
+function descargarCalendario() {
+  const ev = S.eventoActual;
+  if (!ev) return;
+
+  const fechaICS = parsearFechaEvento(ev.fecha);
+
+  let dtStart, dtEnd;
+  if (fechaICS) {
+    // Evento de día completo: DTSTART y DTEND son fechas puras (sin hora)
+    dtStart = `DTSTART;VALUE=DATE:${fechaICS}`;
+    // DTEND en .ics para día completo debe ser el día SIGUIENTE (exclusivo)
+    const siguiente = new Date(
+      parseInt(fechaICS.slice(0,4)),
+      parseInt(fechaICS.slice(4,6)) - 1,
+      parseInt(fechaICS.slice(6,8)) + 1
+    );
+    const ds = `${siguiente.getFullYear()}${String(siguiente.getMonth()+1).padStart(2,'0')}${String(siguiente.getDate()).padStart(2,'0')}`;
+    dtEnd = `DTEND;VALUE=DATE:${ds}`;
+  } else {
+    // Fallback: si no se pudo parsear la fecha, crear evento sin fecha (abre editor en el calendario)
+    const ahora = new Date();
+    const stamp = ahora.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+    dtStart = `DTSTART:${stamp}`;
+    dtEnd   = `DTEND:${stamp}`;
+  }
+
+  const uid = `plantemos-${ev.id}-${Date.now()}@plantemos.org`;
+  const stamp = new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Plantemos 1000 Arboles//Staff App//ES',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${stamp}`,
+    dtStart,
+    dtEnd,
+    `SUMMARY:Plantemos — ${ev.empresa}`,
+    'DESCRIPTION:Evento de reforestación Plantemos 1000 Árboles.\\nMás detalles en: https://plantemos.github.io/plantemos-staff/',
+    'ORGANIZER;CN=Plantemos:mailto:jcm@plantemos.org',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Plantemos - ${ev.empresa}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ══════════════════════════════════════════
