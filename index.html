@@ -976,6 +976,38 @@ async function cargarEventos() {
   }
 }
 
+function diasRestantes(fechaTexto) {
+  const fechaICS = parsearFechaEvento(fechaTexto);
+  if (!fechaICS) return null;
+  const anio = parseInt(fechaICS.slice(0,4));
+  const mes  = parseInt(fechaICS.slice(4,6)) - 1;
+  const dia  = parseInt(fechaICS.slice(6,8));
+  const fechaEvento = new Date(anio, mes, dia);
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  return Math.ceil((fechaEvento - hoy) / (1000*60*60*24));
+}
+
+function chipDias(fechaTexto) {
+  const d = diasRestantes(fechaTexto);
+  if (d === null) return '';
+  if (d < 0)  return `<span class="chip">Ya ocurrió</span>`;
+  if (d === 0) return `<span class="chip verde" style="font-weight:600;">¡Hoy!</span>`;
+  if (d <= 7)  return `<span class="chip verde" style="font-weight:600;">Faltan ${d} día${d!==1?'s':''}</span>`;
+  if (d <= 30) return `<span class="chip verde">Faltan ${d} días</span>`;
+  return `<span class="chip">Faltan ${d} días</span>`;
+}
+
+function chipCobertura(ev) {
+  if (!ev.totalTareas) return '';
+  // Contar tareas cubiertas desde todasInscripciones (admin) o estimar desde inscripciones propias
+  const inscritos = ev.totalInscritos || 0;
+  // Usamos CantidadResponsables max como proxy de tareas cubiertas
+  // Un chip simple con porcentaje de personas vs tareas
+  const pct = Math.min(100, Math.round((inscritos / ev.totalTareas) * 100));
+  const color = pct === 0 ? '' : pct < 50 ? ' verde' : ' verde';
+  return `<span class="chip${color}">${inscritos}/${ev.totalTareas} cubiertos</span>`;
+}
+
 function renderCardEvento(ev) {
   const inscrito = S.misInscripciones.some(i => String(i.EventoId) === String(ev.id));
   const tareasInscritas = S.misInscripciones.filter(i => String(i.EventoId) === String(ev.id)).length;
@@ -984,10 +1016,10 @@ function renderCardEvento(ev) {
     <div class="card-fecha">${ev.fecha}</div>
     <div class="card-lugar">${ev.lugar}</div>
     <div class="card-stats">
-      <span class="chip">${ev.totalTareas} tareas</span>
-      <span class="chip${ev.totalInscritos > 0 ? ' verde' : ''}">${ev.totalInscritos} inscritos</span>
+      ${chipDias(ev.fecha)}
+      ${chipCobertura(ev)}
     </div>
-    ${inscrito ? `<div class="badge-inscrito">Inscrito · ${tareasInscritas} tarea${tareasInscritas !== 1 ? 's' : ''}</div>` : ''}
+    ${inscrito ? `<div class="badge-inscrito">✓ Inscrito · ${tareasInscritas} tarea${tareasInscritas !== 1 ? 's' : ''}</div>` : ''}
   </div>`;
 }
 
@@ -1260,7 +1292,7 @@ function descargarCalendario() {
   const ics = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Plantemos 1000 Arboles//Staff App//ES',
+    'PRODID:-//Plantemos//Staff App//ES',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
@@ -1268,8 +1300,12 @@ function descargarCalendario() {
     `DTSTAMP:${stamp}`,
     dtStart,
     dtEnd,
-    `SUMMARY:Plantemos — ${ev.empresa}`,
-    'DESCRIPTION:Evento de reforestación Plantemos 1000 Árboles.\\nMás detalles en: https://plantemos.github.io/plantemos-staff/',
+    `SUMMARY:Plantemos — ${ev.empresa}`,    `DESCRIPTION:${(() => {
+      const tareas = S.tareasSeleccionadas.length > 0
+        ? 'Tus tareas asignadas:\\n' + S.tareasSeleccionadas.map(i => '\u00b7 ' + extraerNombreTarea(S.tareasEvento[i].Title)).join('\\n')
+        : '';
+      return ('Evento de reforestaci\u00f3n \u2014 Plantemos.\\n\\n' + (tareas ? tareas + '\\n\\n' : '') + 'Ver detalles: https://www.plantemos.org/inscripcionstaff').trim();
+    })()}`,
     'ORGANIZER;CN=Plantemos:mailto:jcm@plantemos.org',
     'END:VEVENT',
     'END:VCALENDAR'
@@ -1326,28 +1362,65 @@ async function cargarMisInscripciones() {
     }
   });
 
-  contEl.innerHTML = Object.entries(porEvento).map(([evId, ev]) => `
-    <div class="inscripcion-card">
+  // Separar en próximos y pasados
+  const entriesOrdenadas = Object.entries(porEvento).sort(([, a], [, b]) => {
+    const da = diasRestantes(a.fecha);
+    const db = diasRestantes(b.fecha);
+    if (da === null && db === null) return 0;
+    if (da === null) return 1;
+    if (db === null) return -1;
+    return da - db;
+  });
+  const proximos = entriesOrdenadas.filter(([, ev]) => { const d = diasRestantes(ev.fecha); return d === null || d >= 0; });
+  const pasados  = entriesOrdenadas.filter(([, ev]) => { const d = diasRestantes(ev.fecha); return d !== null && d < 0; });
+
+  function renderInscripcionCard(evId, ev, esPasado) {
+    const d = diasRestantes(ev.fecha);
+    let cuentaAtras = '';
+    if (!esPasado && d !== null) {
+      if (d === 0) cuentaAtras = `<span style="font-size:12px;font-weight:600;color:var(--verde-oscuro);">¡Hoy es el evento!</span>`;
+      else if (d <= 7) cuentaAtras = `<span style="font-size:12px;font-weight:600;color:var(--verde-oscuro);">Faltan ${d} día${d!==1?'s':''}</span>`;
+      else cuentaAtras = `<span style="font-size:12px;color:var(--texto-suave);">Faltan ${d} días</span>`;
+    }
+    return `
+    <div class="inscripcion-card${esPasado ? ' style="opacity:0.6"' : ''}">
       <div class="inscripcion-header">
         <div>
           <div class="inscripcion-empresa">${ev.nombre}</div>
-          <div class="inscripcion-meta">${ev.tareas.length} tarea${ev.tareas.length !== 1 ? 's' : ''} asignada${ev.tareas.length !== 1 ? 's' : ''}</div>
-          ${ev.fecha ? `<div class="inscripcion-meta" style="margin-top:4px;">📅 ${ev.fecha}${(() => { const hoy = new Date(); const meses = {enero:0,febrero:1,marzo:2,abril:3,mayo:4,junio:5,julio:6,agosto:7,septiembre:8,octubre:9,noviembre:10,diciembre:11}; const mesMatch = ev.fecha.toLowerCase().match(/enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre/); const diaMatch = ev.fecha.match(/\d+/); if (!mesMatch || !diaMatch) return ''; const mes = meses[mesMatch[0]]; const dia = parseInt(diaMatch[0]); const anio = new Date().getFullYear(); const fechaEvento = new Date(anio, mes, dia); const diff = Math.ceil((fechaEvento - hoy) / (1000*60*60*24)); return diff > 0 ? ` · en ${diff} días` : diff === 0 ? ' · ¡Hoy!' : ' · Ya ocurrió'; })()}</div>` : ''}
+          ${ev.fecha ? `<div class="inscripcion-meta" style="margin-top:2px;">📅 ${ev.fecha}</div>` : ''}
+          <div style="margin-top:4px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:12px;color:var(--texto-suave);">${ev.tareas.length} tarea${ev.tareas.length !== 1 ? 's' : ''}</span>
+            ${cuentaAtras}
+            ${esPasado ? `<span style="font-size:11px;background:#1e2416;color:var(--texto-suave);border:0.5px solid var(--borde);padding:2px 8px;border-radius:20px;">Completado</span>` : ''}
+          </div>
         </div>
-        <button class="btn-secundario" style="font-size:12px; padding:6px 12px" onclick="abrirEvento('${evId}'); cambiarTab('eventos')">+ Agregar tareas</button>
+        ${!esPasado ? `<button class="btn-secundario" style="font-size:12px;padding:6px 12px" onclick="abrirEvento('${evId}'); cambiarTab('eventos')">+ Agregar tareas</button>` : ''}
       </div>
-      <div style="font-size:12px; font-weight:500; color:var(--texto-suave); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Mis tareas</div>
+      <div style="font-size:12px;font-weight:500;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Mis tareas</div>
       ${ev.tareas.length > 0
         ? ev.tareas.map(t => `
           <div class="inscripcion-tarea">
             <span class="check-verde">✓</span>
             <span style="flex:1;">${t.nombre}</span>
-            <button class="btn-quitar-tarea" onclick="desinscribir('${evId}', '${ev.nombre}', '${t.tareaId}')">Quitar</button>
+            ${!esPasado ? `<button class="btn-quitar-tarea" onclick="desinscribir('${evId}', '${ev.nombre}', '${t.tareaId}')">Quitar</button>` : ''}
           </div>`).join('')
         : '<div class="inscripcion-tarea" style="color:var(--texto-suave)">Sin tareas específicas asignadas</div>'
       }
-      <button class="btn-retiro-evento" onclick="desinscribir('${evId}', '${ev.nombre}')">Retirarme del evento completo</button>
-    </div>`).join('');
+      ${!esPasado ? `<button class="btn-retiro-evento" onclick="desinscribir('${evId}', '${ev.nombre}')">Retirarme del evento completo</button>` : ''}
+    </div>`;
+  }
+
+  let html = '';
+  if (proximos.length > 0) {
+    html += proximos.map(([evId, ev]) => renderInscripcionCard(evId, ev, false)).join('');
+  } else {
+    html += '<p class="estado-msg">No tienes eventos próximos. Explora los disponibles.</p>';
+  }
+  if (pasados.length > 0) {
+    html += `<div style="font-size:12px;font-weight:500;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.8px;margin:24px 0 12px;padding-top:20px;border-top:0.5px solid var(--borde);">Historial</div>`;
+    html += pasados.map(([evId, ev]) => renderInscripcionCard(evId, ev, true)).join('');
+  }
+  contEl.innerHTML = html;
 
   // Refrescar grid de eventos también
   document.getElementById('eventos-grid').innerHTML = S.eventos.map(ev => renderCardEvento(ev)).join('');
@@ -1417,7 +1490,7 @@ async function cargarLog() {
     cont.innerHTML = `<table class="tabla-admin">
       <thead><tr><th>Fecha y hora</th><th>Staff</th><th>Acción</th><th>Evento</th></tr></thead>
       <tbody>${items.map(item => {
-        const fecha = item.FechaHora ? new Date(item.FechaHora).toLocaleString('es-GT', { dateStyle:'short', timeStyle:'short' }) : '—';
+        const fecha = item.FechaHora ? new Date(item.FechaHora).toLocaleString('es-GT', { dateStyle:'short', timeStyle:'short', timeZone:'America/Guatemala' }) : '—';
         const accion = item.Title || item.Accion || '—';
         const badge = accion === 'Login exitoso' ? 'login' : accion.startsWith('Inscripción') ? 'inscripcion' : 'retiro';
         return `<tr>
@@ -1701,9 +1774,24 @@ function renderAdmin() {
       const tareas = parsearTareasAceptadas(item.TareasAceptadas);
       porPersona[email].push({ evento: item.NombreEvento, tareas });
     });
-    cont.innerHTML = `<table class="tabla-admin">
-      <thead><tr><th>Staff</th><th>Evento</th><th>Tareas asignadas</th></tr></thead>
-      <tbody>${Object.entries(porPersona).map(([email, inscripciones]) =>
+
+    window.renderTablaPersonasGlobal = function(filtro) {
+      const termino = (filtro || '').toLowerCase().trim();
+      const entradas = Object.entries(porPersona).filter(([email, inscripciones]) => {
+        if (!termino) return true;
+        if (email.toLowerCase().includes(termino)) return true;
+        return inscripciones.some(ins =>
+          (ins.evento || '').toLowerCase().includes(termino) ||
+          ins.tareas.some(t => t.toLowerCase().includes(termino))
+        );
+      });
+      const tbody = document.getElementById('admin-personas-tbody');
+      if (!tbody) return;
+      if (entradas.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--texto-suave);padding:20px;font-style:italic;">Sin resultados para "${filtro}"</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = entradas.map(([email, inscripciones]) =>
         inscripciones.map((ins, idx) => `<tr>
           ${idx === 0 ? `<td style="font-weight:500;vertical-align:top;" rowspan="${inscripciones.length}">${email}</td>` : ''}
           <td style="vertical-align:top;">${ins.evento || '—'}</td>
@@ -1713,7 +1801,29 @@ function renderAdmin() {
               : '<span style="font-style:italic;">Sin tareas</span>'}
           </td>
         </tr>`).join('')
-      ).join('')}</tbody></table>`;
+      ).join('');
+    };
+
+    const totalPersonas = Object.keys(porPersona).length;
+    cont.innerHTML = `
+      <div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+        <div style="position:relative;flex:1;max-width:340px;">
+          <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--texto-suave)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input id="admin-buscador" type="text" placeholder="Buscar por persona, evento o tarea…"
+            style="width:100%;padding:8px 12px 8px 32px;font-size:13px;border:0.5px solid var(--borde);border-radius:var(--radio-md);background:var(--superficie);color:var(--texto);font-family:'DM Sans',sans-serif;outline:none;"
+            oninput="renderTablaPersonasGlobal(this.value)"
+            onfocus="this.style.borderColor='var(--verde-oscuro)'"
+            onblur="this.style.borderColor='var(--borde)'" />
+        </div>
+        <span style="font-size:12px;color:var(--texto-suave);white-space:nowrap;">${totalPersonas} persona${totalPersonas !== 1 ? 's' : ''}</span>
+      </div>
+      <table class="tabla-admin">
+        <thead><tr><th>Staff</th><th>Evento</th><th>Tareas asignadas</th></tr></thead>
+        <tbody id="admin-personas-tbody"></tbody>
+      </table>`;
+    window.renderTablaPersonasGlobal('');
 
   } else {
     // Sin responsable — cruzar contra inscripciones reales
